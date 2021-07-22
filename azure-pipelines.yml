@@ -29,6 +29,7 @@ steps:
 - task: GitVersion@5
   inputs:
     runtime: 'core'
+    configFilePath: 'GitVersion.yml'
 
 - script: echo %Action%%BuildVersion%
   displayName: 'Set build version'
