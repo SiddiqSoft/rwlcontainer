@@ -2,11 +2,11 @@ RWContainer : Reader-writer protected container
 -------------------------------------------
 
 [![CodeQL](https://github.com/SiddiqSoft/RWContainer/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/SiddiqSoft/RWContainer/actions/workflows/codeql-analysis.yml)
-[![Build Status](https://dev.azure.com/siddiqsoft/siddiqsoft/_apis/build/status/SiddiqSoft.rwlenvelope?branchName=main)](https://dev.azure.com/siddiqsoft/siddiqsoft/_build/latest?definitionId=7&branchName=main)
+[![Build Status](https://dev.azure.com/siddiqsoft/siddiqsoft/_apis/build/status/SiddiqSoft.rwcontainer?branchName=main)](https://dev.azure.com/siddiqsoft/siddiqsoft/_build/latest?definitionId=8&branchName=main)
 ![](https://img.shields.io/nuget/v/SiddiqSoft.RWContainer)
 ![](https://img.shields.io/github/v/tag/SiddiqSoft/RWContainer)
-![](https://img.shields.io/azure-devops/tests/siddiqsoft/siddiqsoft/7)
-![](https://img.shields.io/azure-devops/coverage/siddiqsoft/siddiqsoft/7)
+![](https://img.shields.io/azure-devops/tests/siddiqsoft/siddiqsoft/8)
+![](https://img.shields.io/azure-devops/coverage/siddiqsoft/siddiqsoft/8)
 
 # Objective
 - Avoid re-implementing the rw-lock; standard C++ (since C++14) has a good reader-writer lock implementation.
