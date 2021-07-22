@@ -1,10 +1,26 @@
-assembly-versioning-scheme: None
 mode: ContinuousDelivery
-next-version: 1.0.0
 branches:
-  main:
+  master:
+    regex: (master|main)
     mode: ContinuousDelivery
-    tag: ''
+    tag:
+    increment: Patch
+    prevent-increment-of-merged-branch-version: true
+    track-merge-target: false
+  feature:
+    regex: feature(s)?[/-]
+    mode: ContinuousDeployment
+  develop:
+    regex: dev(elop)?(ment)?$
+    mode: ContinuousDeployment
+    tag: alpha
+  hotfix:
+    regex: hotfix(es)?[/-]
+    mode: ContinuousDeployment
+    tag: beta
+  release:
+    regex: release(s)?[/-]
+    mode: ContinuousDeployment
+    tag: rc
 ignore:
   sha: []
-merge-message-formats: {}
