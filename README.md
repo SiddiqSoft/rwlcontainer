@@ -2,7 +2,7 @@ RWLContainer : Reader-writer protected container
 -------------------------------------------
 
 [![CodeQL](https://github.com/SiddiqSoft/RWLContainer/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/SiddiqSoft/RWLContainer/actions/workflows/codeql-analysis.yml)
-[![Build Status](https://dev.azure.com/siddiqsoft/siddiqsoft/_apis/build/status/SiddiqSoft.rwcontainer?branchName=main)](https://dev.azure.com/siddiqsoft/siddiqsoft/_build/latest?definitionId=8&branchName=main)
+[![Build Status](https://dev.azure.com/siddiqsoft/siddiqsoft/_apis/build/status/SiddiqSoft.rwlcontainer?branchName=main)](https://dev.azure.com/siddiqsoft/siddiqsoft/_build/latest?definitionId=8&branchName=main)
 ![](https://img.shields.io/nuget/v/SiddiqSoft.RWLContainer)
 ![](https://img.shields.io/github/v/tag/SiddiqSoft/RWLContainer)
 ![](https://img.shields.io/azure-devops/tests/siddiqsoft/siddiqsoft/8)
