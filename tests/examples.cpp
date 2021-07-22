@@ -1,14 +1,14 @@
 #include "gtest/gtest.h"
 
 #include <unordered_map>
-#include "../src/RWContainer.hpp"
+#include "../src/RWLContainer.hpp"
 
 
 TEST(examples, Example1)
 {
 	try
 	{
-		siddiqsoft::RWContainer<std::string, std::string> myContainer;
+		siddiqsoft::RWLContainer<std::string, std::string> myContainer;
 
 		auto item = myContainer.add("foo", "bar");
 		ASSERT_TRUE(item);

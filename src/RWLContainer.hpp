@@ -1,5 +1,5 @@
 /*
-	Reader-Writer protected container
+	Reader-Writer lock protected container
 
 	BSD 3-Clause License
 
@@ -52,7 +52,7 @@ namespace siddiqsoft
 	template <class KeyType,
 	          class StorageType,
 	          typename StorageContainer = std::unordered_map<KeyType, std::shared_ptr<StorageType>>>
-	class RWContainer
+	class RWLContainer
 	{
 	public:
 		using StorageTypePtr = std::shared_ptr<StorageType>;
@@ -187,7 +187,7 @@ namespace siddiqsoft
 		// If the JSON library is included in the current project, then make the serializer available.
 		nlohmann::json toJson()
 		{
-			return nlohmann::json {{"_typver", "RWContainer/1.0.0"},
+			return nlohmann::json {{"_typver", "RWLContainer/1.0.0"},
 			                       {"adds", _counterAdds.load()},
 			                       {"removes", _counterRemoves.load()},
 			                       {"ReplaceExisting", ReplaceExisting},

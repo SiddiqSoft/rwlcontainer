@@ -13,7 +13,7 @@
 		<authors>SiddiqSoft</authors>
 		<description>stdcpp reader-writer lock container class</description>
 		<tags>unique_lock shared_lock reader-writer container lock native nativepackage cpp</tags>
-		<projectUrl>https://github.com/SiddiqSoft/RWContainer</projectUrl>
+		<projectUrl>https://github.com/SiddiqSoft/RWLContainer</projectUrl>
 		<requireLicenseAcceptance>true</requireLicenseAcceptance>
 		<license type="expression">BSD-3-Clause</license>
     <icon>docs\Siddiq-Software-Avatar.png</icon>
@@ -38,6 +38,6 @@
 		<file src="..\README.md" target="docs\" />
     
 		<!-- MSBuild .targets files -->
-		<file src="SiddiqSoft.RWContainer.targets" target="build\native" />
+		<file src="SiddiqSoft.RWLContainer.targets" target="build\native" />
 	</files>
 </package>

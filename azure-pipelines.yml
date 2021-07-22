@@ -47,9 +47,9 @@ steps:
   continueOnError: true
 
 - task: VSBuild@1
-  displayName: 'Build solution RWContainer.sln RELEASE'
+  displayName: 'Build solution RWLContainer.sln RELEASE'
   inputs:
-    solution: 'RWContainer.sln'
+    solution: 'RWLContainer.sln'
     platform: 'x64'
     configuration: 'Release'
     maximumCpuCount: true
@@ -76,7 +76,7 @@ steps:
   displayName: 'NuGet pack'
   inputs:
     command: 'pack'
-    packagesToPack: 'nuget/siddiqsoft.RWContainer.nuspec;!nuget/siddiqsoft.RWContainer.symbols.nuspec'
+    packagesToPack: 'nuget/siddiqsoft.RWLContainer.nuspec;!nuget/siddiqsoft.RWLContainer.symbols.nuspec'
     versioningScheme: 'off'
     buildProperties: 'VERSION=$(build.buildNumber)'
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))

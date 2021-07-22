@@ -1,7 +1,7 @@
 /*
-	RWContainer : tests
+	RWLContainer : tests
 	Reader Writer lock wrapper for object access
-	Repo: https://github.com/SiddiqSoft/RWContainer
+	Repo: https://github.com/SiddiqSoft/RWLContainer
 
 	BSD 3-Clause License
 
@@ -37,7 +37,7 @@
 #include "gtest/gtest.h"
 
 #include "nlohmann/json.hpp"
-#include "../src/RWContainer.hpp"
+#include "../src/RWLContainer.hpp"
 
 
 struct MyItem
@@ -52,7 +52,7 @@ TEST(RWContainer_add, BasicAdd)
 {
 	try
 	{
-		siddiqsoft::RWContainer<std::string, MyItem> myContainer;
+		siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 
 		auto item = myContainer.add("foo", {1, "bar"});
 		ASSERT_TRUE(item);
@@ -68,7 +68,7 @@ TEST(RWContainer_add, BasicAddINE_Collision)
 {
 	try
 	{
-		siddiqsoft::RWContainer<std::string, MyItem> myContainer;
+		siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 
 		auto item = myContainer.add("foo", {1, "bar"});
 		ASSERT_TRUE(item);
@@ -90,7 +90,7 @@ TEST(RWContainer_add, BasicAddINE_Ok)
 {
 	try
 	{
-		siddiqsoft::RWContainer<std::string, MyItem> myContainer;
+		siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 
 		auto item = myContainer.add("foo", {1, "bar"});
 		ASSERT_TRUE(item);
@@ -112,7 +112,7 @@ TEST(RWContainer_add, BasicAddFail)
 {
 	try
 	{
-		siddiqsoft::RWContainer<std::string, MyItem> myContainer;
+		siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 
 		auto item1 = myContainer.add("foo", {1, "bar"});
 		ASSERT_TRUE(item1);
@@ -133,7 +133,7 @@ TEST(RWContainer_add, BasicAddCollissionAllow)
 {
 	try
 	{
-		siddiqsoft::RWContainer<std::string, MyItem> myContainer;
+		siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 		// Add an item.
 		auto item = myContainer.add("foo", {1, "bar"});
 		ASSERT_TRUE(item);
@@ -156,7 +156,7 @@ TEST(RWContainer_add, BasicCreateAndDestroy)
 {
 	try
 	{
-		siddiqsoft::RWContainer<std::string, MyItem> myContainer;
+		siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 
 		EXPECT_TRUE(true); // if we throw then the test fails.
 	}
@@ -170,7 +170,7 @@ TEST(RWContainer_diag, ToJSON)
 {
 	try
 	{
-		siddiqsoft::RWContainer<std::string, MyItem> myContainer;
+		siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 
 		nlohmann::json doc = myContainer.toJson();
 		std::cerr << doc.dump() << std::endl;
@@ -188,7 +188,7 @@ TEST(RWContainer_find, BasicFindOKLargeSet)
 	{
 		const int                                    ITEM_COUNT    = 20000;
 		auto                                         hasCollission = false;
-		siddiqsoft::RWContainer<std::string, MyItem> myContainer;
+		siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 
 		// Add an item.
 		{
@@ -219,7 +219,7 @@ TEST(RWContainer_find, BasicFindNegative)
 {
 	try
 	{
-		siddiqsoft::RWContainer<std::string, MyItem> myContainer;
+		siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 
 		// Add an item.
 		auto item = myContainer.add("foo", {1, "bar"});
@@ -238,7 +238,7 @@ TEST(RWContainer_remove, BasicRemoveOK)
 {
 	try
 	{
-		siddiqsoft::RWContainer<std::string, MyItem> myContainer;
+		siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 
 		// Add an item.
 		auto item = myContainer.add("foo", {1, "bar"});
@@ -261,7 +261,7 @@ TEST(RWContainer_remove, BasicRemoveNegative)
 	try
 	{
 		auto                                         hasCollission = false;
-		siddiqsoft::RWContainer<std::string, MyItem> myContainer;
+		siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 
 		// Add an item.
 		auto item = myContainer.add("foo", {1, "bar"});
@@ -285,7 +285,7 @@ TEST(RWContainer_scan, BasicScanBuildJSONOK)
 
 	try
 	{
-		siddiqsoft::RWContainer<std::string, MyItem> myContainer;
+		siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 		// Add a bunch of items.
 		{
 			for (auto i = 0; i < ITEM_COUNT; i++)
@@ -322,7 +322,7 @@ TEST(RWContainer_scan, BasicScanOK)
 
 	try
 	{
-		siddiqsoft::RWContainer<std::string, MyItem> myContainer;
+		siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 		// Add a bunch of items.
 		{
 			for (auto i = 0; i < ITEM_COUNT; i++)
@@ -361,7 +361,7 @@ TEST(RWContainer_scan, BasicScanNegative)
 		uint64_t                                     ttxAdd {0};
 		uint64_t                                     ttxScan {0};
 		auto                                         hasCollission = false;
-		siddiqsoft::RWContainer<std::string, MyItem> myContainer;
+		siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 
 		// Add a bunch of items.
 		{

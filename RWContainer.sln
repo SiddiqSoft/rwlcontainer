@@ -7,13 +7,13 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "basic_tests", "tests\basic_
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nuget", "nuget", "{71601B88-F90C-44CB-8AA1-45CF0FFE5A17}"
 	ProjectSection(SolutionItems) = preProject
-		nuget\SiddiqSoft.RWContainer.nuspec = nuget\SiddiqSoft.RWContainer.nuspec
-		nuget\SiddiqSoft.RWContainer.targets = nuget\SiddiqSoft.RWContainer.targets
+		nuget\SiddiqSoft.RWLContainer.nuspec = nuget\SiddiqSoft.RWLContainer.nuspec
+		nuget\SiddiqSoft.RWLContainer.targets = nuget\SiddiqSoft.RWLContainer.targets
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{54846193-894C-4194-BF12-A1945ED51AD2}"
 	ProjectSection(SolutionItems) = preProject
-		src\RWContainer.hpp = src\RWContainer.hpp
+		src\RWLContainer.hpp = src\RWLContainer.hpp
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{E3225AD9-7341-43C0-954D-7FBB1AE16523}"
