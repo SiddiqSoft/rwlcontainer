@@ -4,6 +4,8 @@
 #include <queue>
 #include <unordered_map>
 #include <thread>
+#include <array>
+
 #include "../include/siddiqsoft/RWLContainer.hpp"
 #include "../include/siddiqsoft/RWLQueue.hpp"
 
