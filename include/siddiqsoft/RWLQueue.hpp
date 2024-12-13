@@ -34,10 +34,11 @@
 
 #pragma once
 
+#include <chrono>
 #ifndef RWLQUEUE_HPP
 #define RWLQUEUE_HPP
 
-
+#include <iostream>
 #include <concepts>
 #include <queue>
 #include <functional>
@@ -60,7 +61,16 @@ namespace siddiqsoft
 		using RLock  = std::shared_lock<std::shared_mutex>;
 
 	public:
-		~RWLQueue() { _signal.release(); }
+		// Delete copy assignment operator
+		RWLQueue& operator=(const RWLQueue&) = delete;
+		// Delete the copy constructor
+		RWLQueue(const RWLQueue&) = delete;
+
+		~RWLQueue()
+		{
+			std::cout << "Destroying object" << std::endl;
+			_signal.release();
+		}
 		//RWLQueue(RWLQueue&&)       = delete;
 		//auto operator=(RWLQueue&&) = delete;
 
@@ -80,11 +90,16 @@ namespace siddiqsoft
 		}
 
 
-		[[nodiscard]] auto getNext() -> std::optional<StorageType>
+		[[nodiscard]] auto getNext(std::chrono::milliseconds timeoutDuration = std::chrono::milliseconds(500))
+				-> std::optional<StorageType>
 		{
-			using namespace std::chrono_literals;
-
-			if (_signal.try_acquire_for(500ms))
+			// This will wait for the requested interval for an item to be
+			// ready for consumption. If available, we lock and attempt to
+			// pull an item.
+			// It is possible to be signalled and have the item potentially
+			// consumed by another thread (if you have multiple threads against
+			// this object.)
+			if (_signal.try_acquire_for(timeoutDuration))
 			{
 				RWLock _ {_containerMutex};
 
@@ -128,10 +143,10 @@ namespace siddiqsoft
 	private:
 		/// @brief Semaphore with default max signals.
 		std::counting_semaphore<> _signal {0};
-		std::queue<StorageType>   _container {};
-		mutable std::shared_mutex _containerMutex {};
-		std::atomic_uint64_t      _counterAdds {};
-		std::atomic_uint64_t      _counterRemoves {};
+		std::queue<StorageType>   _container;
+		mutable std::shared_mutex _containerMutex;
+		std::atomic_uint64_t      _counterAdds {0};
+		std::atomic_uint64_t      _counterRemoves {0};
 	};
 } // namespace siddiqsoft
 
