@@ -46,6 +46,8 @@ target_compile_options( ${PROJECT_NAME}
 
 # ____________________________________
 # Dependencies
+cpmaddpackage("gh:siddiqsoft/RunOnEnd#1.3.2")
+target_link_libraries(${PROJECT_NAME} INTERFACE RunOnEnd::RunOnEnd)
 
 # ____________________________________
 # Testing

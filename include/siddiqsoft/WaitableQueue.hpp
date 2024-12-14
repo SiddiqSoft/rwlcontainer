@@ -51,6 +51,9 @@
 #include <semaphore>
 #include <type_traits>
 
+#include "siddiqsoft/RunOnEnd.hpp"
+
+
 namespace siddiqsoft
 {
 	/**
@@ -100,12 +103,28 @@ namespace siddiqsoft
 		}
 
 		/**
+		 * @brief Calls the underlying emplace method to the queue within a lock.
+		 * 
+		 * @param value The parameter is forwarded to the emplace method on the queue
+		 */
+		void emplace(StorageType&& value)
+		{
+			{ // scoped read and write lock
+				RWLock _ {_containerMutex};
+				_counterAdds++;
+				_container.emplace(std::forward<decltype(value)>(value));
+			}
+			// Must be outside the lock!
+			_signal.release();
+		}
+
+		/**
         * @brief Returns an item immediately otherwise waits for the minimum specified interval in milliseconds for an item to become available in the internal queue.
         * 
         * @param timeoutDuration 
         * @return std::optional<StorageType> 
         */
-		[[nodiscard]] auto tryWaitForNextItem(std::chrono::milliseconds timeoutDuration = std::chrono::milliseconds(100))
+		[[nodiscard]] auto tryWaitItem(std::chrono::milliseconds timeoutDuration = std::chrono::milliseconds(100))
 				-> std::optional<StorageType>
 		{
 			// This will wait for the requested interval for an item to be
@@ -116,14 +135,16 @@ namespace siddiqsoft
 			// this object.)
 			if (_signal.try_acquire_for(timeoutDuration))
 			{
-				RWLock _ {_containerMutex};
-
-				if (!_container.empty())
+				if (RWLock _ {_containerMutex}; !_container.empty())
 				{
-					StorageType item {std::move(_container.front())};
-					_container.pop();
-					_counterRemoves++;
-					return std::move(item);
+					// Using this scope guard allows us to minimize object movement
+					siddiqsoft::RunOnEnd scopeCleanup {[&]()
+					                                   {
+														   _container.pop();
+														   _counterRemoves++;
+													   }};
+					//return std::make_optional(std::move(_container.front()));
+					return std::make_optional(_container.front());
 				}
 			}
 
@@ -131,7 +152,7 @@ namespace siddiqsoft
 			return {};
 		}
 
-        /**
+		/**
          * @brief Returns the number of elements in the queue.
          * 
          * @return auto 
@@ -148,14 +169,14 @@ namespace siddiqsoft
 		 * 
 		 * @return uint64_t 
 		 */
-		auto addCounter() -> uint64_t { return _counterAdds.load(); }
+		auto addCounter() -> uint64_t { return _counterAdds; }
 
 		/**
-		 * @brief Returns the number of elements processed/popped thus far from the internal queue.
+		 * @brief Returns the number of times tryWaitItem resulted in a successful item retrieval.
 		 * 
 		 * @return uint64_t 
 		 */
-		auto removeCounter() -> uint64_t { return _counterRemoves.load(); }
+		auto removeCounter() -> uint64_t { return _counterRemoves; }
 
 #ifdef INCLUDE_NLOHMANN_JSON_HPP_
 	public:
@@ -163,8 +184,8 @@ namespace siddiqsoft
 		nlohmann::json toJson()
 		{
 			return nlohmann::json {{"_typver", "WaitableQueue/1.0.0"},
-			                       {"adds", _counterAdds.load()},
-			                       {"removes", _counterRemoves.load()},
+			                       {"adds", _counterAdds},
+			                       {"removes", _counterRemoves},
 			                       {"size", _container.size()}};
 		}
 #endif
@@ -174,8 +195,8 @@ namespace siddiqsoft
 		std::counting_semaphore<> _signal {0};
 		StorageContainer          _container;
 		mutable std::shared_mutex _containerMutex;
-		std::atomic_uint64_t      _counterAdds {0};
-		std::atomic_uint64_t      _counterRemoves {0};
+		uint64_t      _counterAdds {0};
+		uint64_t      _counterRemoves {0};
 	};
 } // namespace siddiqsoft
 
