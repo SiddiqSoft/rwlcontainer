@@ -9,9 +9,17 @@ if(${${PROJECT_NAME}_BUILD_TESTS})
     target_compile_options( ${TESTPROJ}
                             PRIVATE
                             $<$<CXX_COMPILER_ID:Clang>:-fexperimental-library> )
+    
+    if(CXX_COMPILER_ID MATCHES [Cc][Ll][Aa][Nn][Gg])
+        message(STATUS "Using sanitizers for leak and address")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address,leak")
+        target_link_libraries(${TESTPROJ} PRIVATE -fsanitize=address,leak)
+        target_compile_options(${TESTPROJ} PRIVATE -fprofile-instr-generate -fcoverage-mapping)
+        target_link_options(${TESTPROJ} PRIVATE -fprofile-instr-generate) 
+    endif()
 
-    message(STATUS "CMAKE_BUILD_TYPE : ${CMAKE_BUILD_TYPE}")
     if( CMAKE_BUILD_TYPE MATCHES [Dd][Ee][Bb][Uu][Gg])
+        message(STATUS "Enable DEBUG in the C++ code; enable instrumentation for code coverage")
         add_compile_definitions(${TESTPROJ} PRIVATE DEBUG=1)
     endif()
 
