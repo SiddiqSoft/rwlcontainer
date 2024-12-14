@@ -9,7 +9,10 @@ if(${${PROJECT_NAME}_BUILD_TESTS})
     target_compile_options( ${TESTPROJ}
                             PRIVATE
                             $<$<CXX_COMPILER_ID:Clang>:-fexperimental-library> )
-
+    target_compile_definitions(${TESTPROJ}
+                            PRIVATE
+                            # If the debug configuration pass the DEBUG define to the compiler 
+                            $<$<CONFIG:Debug>:DEBUG>)
     target_sources( ${TESTPROJ}
                     PRIVATE
                     ${PROJECT_SOURCE_DIR}/tests/queuetest.cpp

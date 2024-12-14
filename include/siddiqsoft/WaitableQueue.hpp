@@ -33,11 +33,12 @@
  */
 
 #pragma once
+#ifndef WaitableQueue_HPP
+#define WaitableQueue_HPP
 
+#include <optional>
 #include <chrono>
-#ifndef RWLQUEUE_HPP
-#define RWLQUEUE_HPP
-
+#include <mutex>
 #include <iostream>
 #include <concepts>
 #include <queue>
@@ -51,46 +52,40 @@
 
 namespace siddiqsoft
 {
-	/// @brief Implements a queue container with reader-writer locking.
-	/// @tparam StorageType Can be any element but avoid using pointers, shared_ptr, unique_ptr
-	template <typename StorageType>
-		requires std::move_constructible<StorageType>
-	struct RWLQueue
+	/// @brief Simple thread-safe interruptible 
+	template <class StorageType, class StorageContainer = std::queue<StorageType>> class WaitableQueue
 	{
 		using RWLock = std::unique_lock<std::shared_mutex>;
 		using RLock  = std::shared_lock<std::shared_mutex>;
 
 	public:
 		// Delete copy assignment operator
-		RWLQueue& operator=(const RWLQueue&) = delete;
+		WaitableQueue& operator=(const WaitableQueue&) = delete;
 		// Delete the copy constructor
-		RWLQueue(const RWLQueue&) = delete;
+		WaitableQueue(const WaitableQueue&) = delete;
+		// Disallow move constructor
+		WaitableQueue(WaitableQueue&&) = delete;
+		// Disallow move assignment operator
+		auto operator=(WaitableQueue&&) = delete;
+		// We must declare this as default since we're removing
+		// the move and copy constructors.
+		WaitableQueue() = default;
+        // We must ask for the default destructor
+		~WaitableQueue() = default;
 
-		~RWLQueue()
-		{
-			std::cout << "Destroying object" << std::endl;
-			_signal.release();
-		}
-		//RWLQueue(RWLQueue&&)       = delete;
-		//auto operator=(RWLQueue&&) = delete;
-
-		/// @brief Adds an element by taking ownership and storing it within a shared_ptr
-		/// @param key Case-sensitive string
-		/// @param value Non pointer
-		/// @return The newly inserted item or existing item
 		void push(StorageType&& value)
 		{
 			{ // scoped read and write lock
 				RWLock _ {_containerMutex};
 				_counterAdds++;
-				_container.push(std::move(value));
+				_container.push(std::forward<decltype(value)>(value));
 			}
 			// Must be outside the lock!
 			_signal.release();
 		}
 
 
-		[[nodiscard]] auto getNext(std::chrono::milliseconds timeoutDuration = std::chrono::milliseconds(500))
+		[[nodiscard]] auto tryWaitForNextItem(std::chrono::milliseconds timeoutDuration = std::chrono::milliseconds(100))
 				-> std::optional<StorageType>
 		{
 			// This will wait for the requested interval for an item to be
@@ -133,7 +128,7 @@ namespace siddiqsoft
 		// If the JSON library is included in the current project, then make the serializer available.
 		nlohmann::json toJson()
 		{
-			return nlohmann::json {{"_typver", "RWLQueue/1.0.0"},
+			return nlohmann::json {{"_typver", "WaitableQueue/1.0.0"},
 			                       {"adds", _counterAdds.load()},
 			                       {"removes", _counterRemoves.load()},
 			                       {"size", _container.size()}};
@@ -143,11 +138,11 @@ namespace siddiqsoft
 	private:
 		/// @brief Semaphore with default max signals.
 		std::counting_semaphore<> _signal {0};
-		std::queue<StorageType>   _container;
+		StorageContainer          _container;
 		mutable std::shared_mutex _containerMutex;
 		std::atomic_uint64_t      _counterAdds {0};
 		std::atomic_uint64_t      _counterRemoves {0};
 	};
 } // namespace siddiqsoft
 
-#endif // !RWLQUEUE_HPP
+#endif // !WaitableQueue_HPP
