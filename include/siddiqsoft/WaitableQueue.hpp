@@ -33,6 +33,7 @@
  */
 
 #pragma once
+#include <cstddef>
 #ifndef WaitableQueue_HPP
 #define WaitableQueue_HPP
 
@@ -52,27 +53,41 @@
 
 namespace siddiqsoft
 {
-	/// @brief Simple thread-safe interruptible 
+	/**
+	 * @brief 
+	 * 
+	 * @tparam StorageType 
+	 * @tparam StorageContainer 
+	 */
 	template <class StorageType, class StorageContainer = std::queue<StorageType>> class WaitableQueue
 	{
 		using RWLock = std::unique_lock<std::shared_mutex>;
 		using RLock  = std::shared_lock<std::shared_mutex>;
 
 	public:
-		// Delete copy assignment operator
+		/**
+         * @brief Copy assignment operator: NOT ALLOWED
+         * 
+         * @return WaitableQueue& 
+         */
 		WaitableQueue& operator=(const WaitableQueue&) = delete;
-		// Delete the copy constructor
+		/// Delete the copy constructor
 		WaitableQueue(const WaitableQueue&) = delete;
-		// Disallow move constructor
+		/// Disallow move constructor
 		WaitableQueue(WaitableQueue&&) = delete;
-		// Disallow move assignment operator
+		/// Disallow move assignment operator
 		auto operator=(WaitableQueue&&) = delete;
-		// We must declare this as default since we're removing
-		// the move and copy constructors.
+		/// We must declare this as default since we're removing
+		/// the move and copy constructors.
 		WaitableQueue() = default;
-        // We must ask for the default destructor
+		/// We must ask for the default destructor
 		~WaitableQueue() = default;
 
+		/**
+		 * @brief Push item at the end of the internal queue and signals waiting clients.
+		 * 
+		 * @param value The parameter is forwarded into the queue. The client must std::move() the item if they wish to transfer ownership.
+		 */
 		void push(StorageType&& value)
 		{
 			{ // scoped read and write lock
@@ -84,7 +99,12 @@ namespace siddiqsoft
 			_signal.release();
 		}
 
-
+		/**
+        * @brief Returns an item immediately otherwise waits for the minimum specified interval in milliseconds for an item to become available in the internal queue.
+        * 
+        * @param timeoutDuration 
+        * @return std::optional<StorageType> 
+        */
 		[[nodiscard]] auto tryWaitForNextItem(std::chrono::milliseconds timeoutDuration = std::chrono::milliseconds(100))
 				-> std::optional<StorageType>
 		{
@@ -111,7 +131,11 @@ namespace siddiqsoft
 			return {};
 		}
 
-
+        /**
+         * @brief Returns the number of elements in the queue.
+         * 
+         * @return auto 
+         */
 		auto size() const
 		{
 			RLock _ {_containerMutex};
@@ -119,8 +143,18 @@ namespace siddiqsoft
 			return _container.size();
 		}
 
+		/**
+		 * @brief Returns the number of elements added thus far into the internal queue.
+		 * 
+		 * @return uint64_t 
+		 */
 		auto addCounter() -> uint64_t { return _counterAdds.load(); }
 
+		/**
+		 * @brief Returns the number of elements processed/popped thus far from the internal queue.
+		 * 
+		 * @return uint64_t 
+		 */
 		auto removeCounter() -> uint64_t { return _counterRemoves.load(); }
 
 #ifdef INCLUDE_NLOHMANN_JSON_HPP_
