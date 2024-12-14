@@ -143,8 +143,8 @@ namespace siddiqsoft
 														   _container.pop();
 														   _counterRemoves++;
 													   }};
-					//return std::make_optional(std::move(_container.front()));
-					return std::make_optional(_container.front());
+					// Return the object with minimal copy
+					return std::make_optional(std::forward<StorageType>(_container.front()));
 				}
 			}
 
