@@ -113,40 +113,43 @@ TEST(WaitableQueueTests, LoadTest_2)
 	static const int                        THREAD_COUNT    = 4;
 	siddiqsoft::WaitableQueue<MyTestObject> myContainer;
 
-	// The worker function for each thread..
-	auto workerFunction = [](std::stop_token st, siddiqsoft::WaitableQueue<MyTestObject>& myContainer)
+	try
 	{
-		uint64_t itemCount = 0;
-
-		std::cout << std::this_thread::get_id() << " - LoadTest_2 Worker started." << std::endl;
-		while (!st.stop_requested())
+		// The worker function for each thread..
+		auto workerFunction = [](std::stop_token st, siddiqsoft::WaitableQueue<MyTestObject>& myContainer)
 		{
-			auto item = myContainer.tryWaitItem();
-			if (item.has_value()) itemCount++;
+			uint64_t itemCount = 0;
+
+			std::cout << std::this_thread::get_id() << " - LoadTest_2 Worker started." << std::endl;
+			while (!st.stop_requested())
+			{
+				auto item = myContainer.tryWaitItem();
+				if (item.has_value()) itemCount++;
+			}
+			std::cout << std::this_thread::get_id() << " - LoadTest_2 Worker ended..." << itemCount << std::endl;
+		};
+
+		// Create the workers..
+		std::array<std::jthread, THREAD_COUNT> threadPool {};
+		for (int i = 0; i < THREAD_COUNT; i++)
+		{
+			threadPool[i] = std::jthread(workerFunction, std::ref(myContainer));
 		}
-		std::cout << std::this_thread::get_id() << " - LoadTest_2 Worker ended..." << itemCount << std::endl;
-	};
 
-	// Create the workers..
-	std::array<std::jthread, THREAD_COUNT> threadPool {};
-	for (int i = 0; i < THREAD_COUNT; i++)
-	{
-		threadPool[i] = std::jthread(workerFunction, std::ref(myContainer));
+		for (auto i = 0; i < ITERATION_COUNT; i++)
+		{
+			myContainer.emplace(MyTestObject(std::format("MyObject(2):{}:{}", i, ITERATION_COUNT)));
+		}
+
+		// Immediately request stop..
+		for (auto& t : threadPool)
+		{
+			std::cout << "LoadTest_2 - Force stopping thread #" << t.get_id() << std::endl;
+			t.request_stop();
+		}
 	}
-
-	for (auto i = 0; i < ITERATION_COUNT; i++)
+	catch (...)
 	{
-		MyTestObject mto(std::format("MyObject(2):{}:{}", i, ITERATION_COUNT));
-		myContainer.emplace(std::move(mto));
-		if (i > (ITERATION_COUNT / THREAD_COUNT - 1)) threadPool[THREAD_COUNT - 2].request_stop();
-		if (i > (ITERATION_COUNT / THREAD_COUNT - 2)) threadPool[THREAD_COUNT - 3].request_stop();
-	}
-
-	// Immediately request stop..
-	for (auto& t : threadPool)
-	{
-		std::cout << "LoadTest_2 - Force stopping thread #" << t.get_id() << std::endl;
-		t.request_stop();
 	}
 
 	std::cout << std::format("\n{} - Expected Iteration count: {}  Adds: {}  Removes: {}  size: {}   Destroyed: {} ++--++\n",
