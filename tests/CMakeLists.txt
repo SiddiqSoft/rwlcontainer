@@ -10,16 +10,16 @@ if(${${PROJECT_NAME}_BUILD_TESTS})
                             PRIVATE
                             $<$<CXX_COMPILER_ID:Clang>:-fexperimental-library> )
     
-    if(CXX_COMPILER_ID MATCHES [Cc][Ll][Aa][Nn][Gg])
-        message(STATUS "Using sanitizers for leak and address")
+    if(CMAKE_CXX_COMPILER_ID MATCHES [Cc][Ll][Aa][Nn][Gg])
+        message(STATUS "Using sanitizers for leak and address on ${CMAKE_CXX_COMPILER_ID}")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address,leak")
         target_link_libraries(${TESTPROJ} PRIVATE -fsanitize=address,leak)
+        message(STATUS "Enable DEBUG in the C++ code; enable instrumentation for code coverage")
         target_compile_options(${TESTPROJ} PRIVATE -fprofile-instr-generate -fcoverage-mapping)
         target_link_options(${TESTPROJ} PRIVATE -fprofile-instr-generate) 
     endif()
 
     if( CMAKE_BUILD_TYPE MATCHES [Dd][Ee][Bb][Uu][Gg])
-        message(STATUS "Enable DEBUG in the C++ code; enable instrumentation for code coverage")
         add_compile_definitions(${TESTPROJ} PRIVATE DEBUG=1)
     endif()
 
