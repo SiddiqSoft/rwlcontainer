@@ -14,7 +14,9 @@ if(${${PROJECT_NAME}_BUILD_TESTS})
         message(STATUS "Using sanitizers for leak and address on ${CMAKE_CXX_COMPILER_ID}")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address,leak")
         target_link_libraries(${TESTPROJ} PRIVATE -fsanitize=address,leak)
-        message(STATUS "Enable DEBUG in the C++ code; enable instrumentation for code coverage")
+        message(STATUS "Enable instrumentation for code coverage")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fprofile-instr-generate")
         target_compile_options(${TESTPROJ} PRIVATE -fprofile-instr-generate -fcoverage-mapping)
         target_link_options(${TESTPROJ} PRIVATE -fprofile-instr-generate) 
     endif()
@@ -35,7 +37,6 @@ if(${${PROJECT_NAME}_BUILD_TESTS})
     target_link_libraries(${TESTPROJ} PRIVATE nlohmann_json::nlohmann_json)
     cpmaddpackage("gh:siddiqsoft/RunOnEnd#1.3.2")
     target_link_libraries(${TESTPROJ} PRIVATE RunOnEnd::RunOnEnd)
-
 
     include(GoogleTest)
 
