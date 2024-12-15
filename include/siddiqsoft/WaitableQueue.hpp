@@ -56,33 +56,40 @@
 
 namespace siddiqsoft
 {
+	template <typename T>
+	concept Movable = std::is_move_constructible_v<T> && std::is_move_assignable_v<T>;
+
+
 	/**
-	 * @brief 
+	 * @brief WaitableQueue. Object cannot be re-assigned, copied or moved as it stores a shared_mutex and counting_semaphore.
+     *        Use this container in a multi-threaded scenario with workers processing IO from this queued list.
+     *        Implementes a reader-writer lock to alleviate client burden.
+     *        The client threads must deal with timeouts on empty queue.
 	 * 
-	 * @tparam StorageType 
-	 * @tparam StorageContainer 
+	 * @tparam StorageType Any moveable object
+	 * @tparam StorageContainer Defaults to a std::queue<StorageType>
 	 */
-	template <class StorageType, class StorageContainer = std::queue<StorageType>> class WaitableQueue
+	template <class StorageType, class StorageContainer = std::queue<StorageType>>
+		requires Movable<StorageType>
+	class WaitableQueue
 	{
 		using RWLock = std::unique_lock<std::shared_mutex>;
 		using RLock  = std::shared_lock<std::shared_mutex>;
 
 	public:
-		/**
-         * @brief Copy assignment operator: NOT ALLOWED
-         * 
-         * @return WaitableQueue& 
-         */
+		/// @brief Disallow the copy assignment operator
 		WaitableQueue& operator=(const WaitableQueue&) = delete;
-		/// Delete the copy constructor
+		/// @brief Delete the copy constructor
 		WaitableQueue(const WaitableQueue&) = delete;
-		/// Disallow move constructor
+		/// @brief Disallow move constructor
 		WaitableQueue(WaitableQueue&&) = delete;
-		/// Disallow move assignment operator
+		/// @brief Disallow move assignment operator
 		auto operator=(WaitableQueue&&) = delete;
+		/// @brief Default constructor.
 		/// We must declare this as default since we're removing
 		/// the move and copy constructors.
 		WaitableQueue() = default;
+		/// @brief Default destructor.
 		/// We must ask for the default destructor
 		~WaitableQueue() = default;
 
@@ -93,8 +100,8 @@ namespace siddiqsoft
 		 */
 		void push(StorageType&& value)
 		{
-			{ // scoped read and write lock
-				RWLock _ {_containerMutex};
+			if (RWLock _ {_containerMutex}; true)
+			{
 				_counterAdds++;
 				_container.push(std::forward<decltype(value)>(value));
 			}
@@ -109,8 +116,8 @@ namespace siddiqsoft
 		 */
 		void emplace(StorageType&& value)
 		{
-			{ // scoped read and write lock
-				RWLock _ {_containerMutex};
+			if (RWLock _ {_containerMutex}; true)
+			{
 				_counterAdds++;
 				_container.emplace(std::forward<decltype(value)>(value));
 			}
@@ -171,6 +178,7 @@ namespace siddiqsoft
 		 */
 		auto addCounter() -> uint64_t { return _counterAdds; }
 
+
 		/**
 		 * @brief Returns the number of times tryWaitItem resulted in a successful item retrieval.
 		 * 
@@ -193,10 +201,14 @@ namespace siddiqsoft
 	private:
 		/// @brief Semaphore with default max signals.
 		std::counting_semaphore<> _signal {0};
-		StorageContainer          _container;
+		/// @brief The container (defaults to std::queue)
+		StorageContainer _container;
+		/// @brief The shared mutex used to perform reader-writer lock
 		mutable std::shared_mutex _containerMutex;
-		uint64_t      _counterAdds {0};
-		uint64_t      _counterRemoves {0};
+		/// @brief Tracks the total number of adds to the container
+		uint64_t _counterAdds {0};
+		/// @brief Tracks the total number of removes from the container
+		uint64_t _counterRemoves {0};
 	};
 } // namespace siddiqsoft
 
