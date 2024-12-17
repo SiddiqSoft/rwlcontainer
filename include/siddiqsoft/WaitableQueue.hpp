@@ -34,6 +34,7 @@
 
 #pragma once
 #include <cstddef>
+#include <thread>
 #ifndef WaitableQueue_HPP
 #define WaitableQueue_HPP
 
@@ -126,6 +127,30 @@ namespace siddiqsoft
 		}
 
 		/**
+		 * @brief Spins until the specified timeout to allow the outbound queue to be emptied.
+         *        Use this call only when you're about to end use of the object and want the queue
+         *        to be processed (without leaving unprocessed items).
+		 * 
+		 * @param timeoutDuration Timeout in milliseconds; defaults to 1500ms.
+		 * @return std::optional<size_t> 
+		 */
+		auto waitUntilEmpty(std::chrono::milliseconds timeoutDuration = std::chrono::milliseconds(1500)) -> std::optional<size_t>
+		{
+			constexpr std::chrono::milliseconds spinInterval {32};
+			std::chrono::milliseconds           spinDuration {32};
+
+			while (!_container.empty() && (spinDuration < timeoutDuration))
+			{
+				// Something is in the queue.. let's spinwait
+				std::this_thread::sleep_for(spinDuration);
+				spinDuration += spinInterval;
+			}
+
+			return size();
+		}
+
+
+		/**
         * @brief Returns an item immediately otherwise waits for the minimum specified interval in milliseconds for an item to become available in the internal queue.
         * 
         * @param timeoutDuration 
@@ -164,7 +189,7 @@ namespace siddiqsoft
          * 
          * @return auto 
          */
-		auto size() const
+		auto size() -> size_t const
 		{
 			RLock _ {_containerMutex};
 
