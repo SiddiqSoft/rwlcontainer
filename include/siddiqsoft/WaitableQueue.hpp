@@ -175,8 +175,8 @@ namespace siddiqsoft
 														   _container.pop();
 														   _counterRemoves++;
 													   }};
-					// Return the object with minimal copy
-					return std::make_optional(std::forward<StorageType>(_container.front()));
+					// Return the object via move since it will be popped by the scope guard
+					return std::make_optional(std::move(_container.front()));
 				}
 			}
 

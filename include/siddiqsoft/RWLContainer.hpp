@@ -62,9 +62,9 @@ namespace siddiqsoft
 
 		/// @brief Adds an element by taking ownership and storing it within a shared_ptr
 		/// @param key Case-sensitive string
-		/// @param value Non pointer
+		/// @param value Non pointer (moved into a shared_ptr)
 		/// @return The newly inserted item or existing item
-		StorageTypePtr add(const KeyType& key, const StorageType&& value)
+		StorageTypePtr add(const KeyType& key, StorageType&& value)
 		{
 			std::unique_lock<std::shared_mutex> myWriterLock(_containerMutex);
 
@@ -76,7 +76,7 @@ namespace siddiqsoft
 				return itemFound->second;
 
 			// Item not found.. ReplaceExisting=> true and FailOnCollission=> false
-			if (auto [iter, rv] = _container.insert_or_assign(key, std::make_shared<StorageType>(value));
+			if (auto [iter, rv] = _container.insert_or_assign(key, std::make_shared<StorageType>(std::move(value)));
 			    iter != _container.end())                            // insert/assign new item
 				return _counterAdds++ ? iter->second : iter->second; // shortcut expression
 
@@ -84,11 +84,11 @@ namespace siddiqsoft
 		}
 
 
-		/// @brief Adds an element by taking ownership and storing it within a shared_ptr
+		/// @brief Adds an element by taking ownership of the shared_ptr
 		/// @param key Case-sensitive string
-		/// @param value shared_ptr
+		/// @param value shared_ptr (moved into the container)
 		/// @return The newly inserted item or existing item
-		StorageTypePtr add(const KeyType& key, const StorageTypePtr&& value)
+		StorageTypePtr add(const KeyType& key, StorageTypePtr&& value)
 		{
 			std::unique_lock<std::shared_mutex> myWriterLock(_containerMutex);
 
@@ -100,8 +100,8 @@ namespace siddiqsoft
 				return itemFound->second;
 
 			// Item not found.. ReplaceExisting=> true and FailOnCollission=> false
-			if (auto [iter, rv] = _container.insert_or_assign(key, value); iter != _container.end()) // insert/assign new item
-				return _counterAdds++ ? iter->second : iter->second;                                 // shortcut expression
+			if (auto [iter, rv] = _container.insert_or_assign(key, std::move(value)); iter != _container.end()) // insert/assign new item
+				return _counterAdds++ ? iter->second : iter->second;                                            // shortcut expression
 
 			throw std::runtime_error(std::format("{} - Failed to add for key:{}", __FUNCTION__, key));
 		}
