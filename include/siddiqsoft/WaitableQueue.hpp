@@ -236,9 +236,9 @@ namespace siddiqsoft
 		/// @brief The shared mutex used to perform reader-writer lock
 		mutable std::shared_mutex _containerMutex;
 		/// @brief Tracks the total number of adds to the container
-		uint64_t _counterAdds {0};
+		std::atomic_uint64_t _counterAdds {0};
 		/// @brief Tracks the total number of removes from the container
-		uint64_t _counterRemoves {0};
+		std::atomic_uint64_t _counterRemoves {0};
 	};
 } // namespace siddiqsoft
 
