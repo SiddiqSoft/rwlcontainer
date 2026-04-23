@@ -825,3 +825,327 @@ TEST(WaitableQueueStress, RapidPushPopCycles)
 	                         popped.load(),
 	                         queue.size());
 }
+
+// ============================================================================
+// waitUntilEmpty() data race stress tests
+//
+// waitUntilEmpty() previously called _container.empty() without holding the
+// mutex, racing with push/emplace/tryWaitItem on other threads. These tests
+// exercise that code path under heavy concurrent mutation.
+// ============================================================================
+
+/// waitUntilEmpty() called from one thread while producers are still actively
+/// pushing and consumers are actively popping. The spin-loop inside
+/// waitUntilEmpty() must not crash, corrupt state, or deadlock.
+TEST(WaitableQueueStress, WaitUntilEmptyDuringActiveProduceConsume)
+{
+	static constexpr int PRODUCER_THREADS   = 4;
+	static constexpr int CONSUMER_THREADS   = 4;
+	static constexpr int ITEMS_PER_PRODUCER = 5000;
+
+	siddiqsoft::WaitableQueue<std::string> queue;
+	std::atomic_uint64_t                   totalConsumed {0};
+
+	auto consumerFn = [&](std::stop_token st)
+	{
+		while (!st.stop_requested())
+		{
+			auto item = queue.tryWaitItem(std::chrono::milliseconds(10));
+			if (item.has_value()) totalConsumed.fetch_add(1, std::memory_order_relaxed);
+		}
+		while (true)
+		{
+			auto item = queue.tryWaitItem(std::chrono::milliseconds(5));
+			if (!item.has_value()) break;
+			totalConsumed.fetch_add(1, std::memory_order_relaxed);
+		}
+	};
+
+	auto producerFn = [&](int threadId)
+	{
+		for (int i = 0; i < ITEMS_PER_PRODUCER; ++i)
+		{
+			queue.emplace(std::format("wue_t{}_i{}", threadId, i));
+		}
+	};
+
+	std::vector<std::jthread> consumers;
+	for (int t = 0; t < CONSUMER_THREADS; ++t)
+		consumers.emplace_back(consumerFn);
+
+	std::vector<std::jthread> producers;
+	for (int t = 0; t < PRODUCER_THREADS; ++t)
+		producers.emplace_back(producerFn, t);
+
+	// Race: waitUntilEmpty while producers and consumers are active
+	auto waitResult = queue.waitUntilEmpty(std::chrono::milliseconds(500));
+
+	for (auto& p : producers)
+		p.join();
+
+	queue.waitUntilEmpty(std::chrono::milliseconds(5000));
+
+	for (auto& c : consumers)
+		c.request_stop();
+	for (auto& c : consumers)
+		c.join();
+
+	auto expected = static_cast<uint64_t>(PRODUCER_THREADS * ITEMS_PER_PRODUCER);
+	EXPECT_EQ(expected, queue.addCounter());
+	EXPECT_EQ(expected, totalConsumed.load()) << "remaining=" << queue.size();
+	std::cout << std::format("WaitUntilEmptyDuringActiveProduceConsume: adds={} consumed={} remaining={}\n",
+	                         queue.addCounter(), totalConsumed.load(), queue.size());
+}
+
+
+/// Multiple threads call waitUntilEmpty() simultaneously while producers
+/// and consumers are active. Tests that the shared_lock inside the fixed
+/// waitUntilEmpty() doesn't deadlock with the unique_lock in push/tryWaitItem.
+TEST(WaitableQueueStress, ConcurrentWaitUntilEmptyCalls)
+{
+	static constexpr int WAITER_THREADS   = 4;
+	static constexpr int PRODUCER_THREADS = 2;
+	static constexpr int CONSUMER_THREADS = 2;
+	static constexpr int TOTAL_ITEMS      = 10000;
+
+	siddiqsoft::WaitableQueue<int> queue;
+	std::atomic_uint64_t           totalConsumed {0};
+	std::atomic_uint64_t           waiterCompletions {0};
+	std::latch                     startGate(WAITER_THREADS + PRODUCER_THREADS + CONSUMER_THREADS);
+
+	auto producerFn = [&](int threadId)
+	{
+		startGate.arrive_and_wait();
+		int perThread = TOTAL_ITEMS / PRODUCER_THREADS;
+		for (int i = 0; i < perThread; ++i)
+		{
+			int val = threadId * perThread + i;
+			queue.push(std::move(val));
+			if (i % 100 == 0) std::this_thread::yield();
+		}
+	};
+
+	auto consumerFn = [&](std::stop_token st)
+	{
+		startGate.arrive_and_wait();
+		while (!st.stop_requested())
+		{
+			auto item = queue.tryWaitItem(std::chrono::milliseconds(10));
+			if (item.has_value()) totalConsumed.fetch_add(1, std::memory_order_relaxed);
+		}
+		while (true)
+		{
+			auto item = queue.tryWaitItem(std::chrono::milliseconds(5));
+			if (!item.has_value()) break;
+			totalConsumed.fetch_add(1, std::memory_order_relaxed);
+		}
+	};
+
+	auto waiterFn = [&](std::stop_token st)
+	{
+		startGate.arrive_and_wait();
+		while (!st.stop_requested())
+		{
+			queue.waitUntilEmpty(std::chrono::milliseconds(50));
+			waiterCompletions.fetch_add(1, std::memory_order_relaxed);
+		}
+	};
+
+	std::vector<std::jthread> consumers;
+	for (int t = 0; t < CONSUMER_THREADS; ++t)
+		consumers.emplace_back(consumerFn);
+
+	std::vector<std::jthread> waiters;
+	for (int t = 0; t < WAITER_THREADS; ++t)
+		waiters.emplace_back(waiterFn);
+
+	std::vector<std::jthread> producers;
+	for (int t = 0; t < PRODUCER_THREADS; ++t)
+		producers.emplace_back(producerFn, t);
+
+	for (auto& p : producers)
+		p.join();
+
+	queue.waitUntilEmpty(std::chrono::milliseconds(5000));
+
+	for (auto& w : waiters) w.request_stop();
+	for (auto& w : waiters) w.join();
+	for (auto& c : consumers) c.request_stop();
+	for (auto& c : consumers) c.join();
+
+	EXPECT_EQ(static_cast<uint64_t>(TOTAL_ITEMS), queue.addCounter());
+	EXPECT_EQ(static_cast<uint64_t>(TOTAL_ITEMS), totalConsumed.load()) << "remaining=" << queue.size();
+	std::cout << std::format("ConcurrentWaitUntilEmptyCalls: adds={} consumed={} waiterCompletions={} remaining={}\n",
+	                         queue.addCounter(), totalConsumed.load(), waiterCompletions.load(), queue.size());
+}
+
+
+/// Rapid alternation between filling the queue and calling waitUntilEmpty().
+/// Each iteration pushes a batch, then immediately calls waitUntilEmpty()
+/// while consumers drain. Maximizes the race window.
+TEST(WaitableQueueStress, WaitUntilEmptyRepeatedBatchDrain)
+{
+	static constexpr int CONSUMER_THREADS = 4;
+	static constexpr int BATCH_SIZE       = 500;
+	static constexpr int BATCH_COUNT      = 40;
+
+	siddiqsoft::WaitableQueue<int> queue;
+	std::atomic_uint64_t           totalConsumed {0};
+
+	auto consumerFn = [&](std::stop_token st)
+	{
+		while (!st.stop_requested())
+		{
+			auto item = queue.tryWaitItem(std::chrono::milliseconds(5));
+			if (item.has_value()) totalConsumed.fetch_add(1, std::memory_order_relaxed);
+		}
+		while (true)
+		{
+			auto item = queue.tryWaitItem(std::chrono::milliseconds(5));
+			if (!item.has_value()) break;
+			totalConsumed.fetch_add(1, std::memory_order_relaxed);
+		}
+	};
+
+	std::vector<std::jthread> consumers;
+	for (int t = 0; t < CONSUMER_THREADS; ++t)
+		consumers.emplace_back(consumerFn);
+
+	for (int batch = 0; batch < BATCH_COUNT; ++batch)
+	{
+		for (int i = 0; i < BATCH_SIZE; ++i)
+		{
+			int val = batch * BATCH_SIZE + i;
+			queue.push(std::move(val));
+		}
+		queue.waitUntilEmpty(std::chrono::milliseconds(2000));
+	}
+
+	queue.waitUntilEmpty(std::chrono::milliseconds(3000));
+
+	for (auto& c : consumers) c.request_stop();
+	for (auto& c : consumers) c.join();
+
+	auto expected = static_cast<uint64_t>(BATCH_SIZE * BATCH_COUNT);
+	EXPECT_EQ(expected, queue.addCounter());
+	EXPECT_EQ(expected, totalConsumed.load()) << "remaining=" << queue.size();
+	std::cout << std::format("WaitUntilEmptyRepeatedBatchDrain: adds={} consumed={} remaining={}\n",
+	                         queue.addCounter(), totalConsumed.load(), queue.size());
+}
+
+
+/// waitUntilEmpty() on empty queue while a producer is about to start.
+/// Tests the empty->non-empty transition racing with the emptiness check.
+TEST(WaitableQueueStress, WaitUntilEmptyOnEmptyThenFill)
+{
+	static constexpr int ITERATIONS = 100;
+	static constexpr int ITEMS      = 50;
+
+	siddiqsoft::WaitableQueue<int> queue;
+	std::atomic_uint64_t           totalConsumed {0};
+
+	auto consumerFn = [&](std::stop_token st)
+	{
+		while (!st.stop_requested())
+		{
+			auto item = queue.tryWaitItem(std::chrono::milliseconds(5));
+			if (item.has_value()) totalConsumed.fetch_add(1, std::memory_order_relaxed);
+		}
+		while (true)
+		{
+			auto item = queue.tryWaitItem(std::chrono::milliseconds(5));
+			if (!item.has_value()) break;
+			totalConsumed.fetch_add(1, std::memory_order_relaxed);
+		}
+	};
+
+	std::jthread consumer(consumerFn);
+
+	for (int iter = 0; iter < ITERATIONS; ++iter)
+	{
+		std::jthread producer([&, iter]()
+		{
+			for (int i = 0; i < ITEMS; ++i)
+			{
+				int val = iter * ITEMS + i;
+				queue.push(std::move(val));
+			}
+		});
+
+		queue.waitUntilEmpty(std::chrono::milliseconds(500));
+		producer.join();
+		queue.waitUntilEmpty(std::chrono::milliseconds(1000));
+	}
+
+	consumer.request_stop();
+	consumer.join();
+
+	auto expected = static_cast<uint64_t>(ITERATIONS * ITEMS);
+	EXPECT_EQ(expected, queue.addCounter());
+	EXPECT_EQ(expected, totalConsumed.load()) << "remaining=" << queue.size();
+	std::cout << std::format("WaitUntilEmptyOnEmptyThenFill: adds={} consumed={} remaining={}\n",
+	                         queue.addCounter(), totalConsumed.load(), queue.size());
+}
+
+
+/// Tight-loop waitUntilEmpty() from many threads with tiny timeouts while
+/// push/pop happen concurrently. Maximizes mutex contention between the
+/// read-lock in waitUntilEmpty() and the write-lock in push()/tryWaitItem().
+TEST(WaitableQueueStress, WaitUntilEmptyTightLoopContention)
+{
+	static constexpr int WAITER_THREADS = 6;
+	static constexpr int TOTAL_ITEMS    = 20000;
+
+	siddiqsoft::WaitableQueue<int> queue;
+	std::atomic_uint64_t           totalConsumed {0};
+	std::atomic_uint64_t           totalWaitCalls {0};
+	std::atomic_bool               done {false};
+
+	auto consumerFn = [&](std::stop_token st)
+	{
+		while (!st.stop_requested())
+		{
+			auto item = queue.tryWaitItem(std::chrono::milliseconds(2));
+			if (item.has_value()) totalConsumed.fetch_add(1, std::memory_order_relaxed);
+		}
+		while (true)
+		{
+			auto item = queue.tryWaitItem(std::chrono::milliseconds(2));
+			if (!item.has_value()) break;
+			totalConsumed.fetch_add(1, std::memory_order_relaxed);
+		}
+	};
+
+	auto waiterFn = [&]()
+	{
+		while (!done.load(std::memory_order_acquire))
+		{
+			queue.waitUntilEmpty(std::chrono::milliseconds(1));
+			totalWaitCalls.fetch_add(1, std::memory_order_relaxed);
+		}
+	};
+
+	std::jthread consumer(consumerFn);
+
+	std::vector<std::jthread> waiters;
+	for (int t = 0; t < WAITER_THREADS; ++t)
+		waiters.emplace_back(waiterFn);
+
+	for (int i = 0; i < TOTAL_ITEMS; ++i)
+	{
+		int val = i;
+		queue.push(std::move(val));
+	}
+
+	queue.waitUntilEmpty(std::chrono::milliseconds(5000));
+
+	done.store(true, std::memory_order_release);
+	for (auto& w : waiters) w.join();
+	consumer.request_stop();
+	consumer.join();
+
+	EXPECT_EQ(static_cast<uint64_t>(TOTAL_ITEMS), queue.addCounter());
+	EXPECT_EQ(static_cast<uint64_t>(TOTAL_ITEMS), totalConsumed.load()) << "remaining=" << queue.size();
+	std::cout << std::format("WaitUntilEmptyTightLoopContention: adds={} consumed={} waitCalls={} remaining={}\n",
+	                         queue.addCounter(), totalConsumed.load(), totalWaitCalls.load(), queue.size());
+}

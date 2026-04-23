@@ -97,14 +97,14 @@ namespace siddiqsoft
 		/**
 		 * @brief Push item at the end of the internal queue and signals waiting clients.
 		 * 
-		 * @param value The parameter is forwarded into the queue. The client must std::move() the item if they wish to transfer ownership.
+		 * @param value The parameter is moved into the queue. The client must std::move() the item if they wish to transfer ownership.
 		 */
 		void push(StorageType&& value)
 		{
 			if (RWLock _ {_containerMutex}; true)
 			{
 				_counterAdds++;
-				_container.push(std::forward<decltype(value)>(value));
+				_container.push(std::move(value));
 			}
 			// Must be outside the lock!
 			_signal.release();
@@ -113,14 +113,14 @@ namespace siddiqsoft
 		/**
 		 * @brief Calls the underlying emplace method to the queue within a lock.
 		 * 
-		 * @param value The parameter is forwarded to the emplace method on the queue
+		 * @param value The parameter is moved into the emplace method on the queue
 		 */
 		void emplace(StorageType&& value)
 		{
 			if (RWLock _ {_containerMutex}; true)
 			{
 				_counterAdds++;
-				_container.emplace(std::forward<decltype(value)>(value));
+				_container.emplace(std::move(value));
 			}
 			// Must be outside the lock!
 			_signal.release();
@@ -139,7 +139,12 @@ namespace siddiqsoft
 			constexpr std::chrono::milliseconds spinInterval {32};
 			std::chrono::milliseconds           spinDuration {32};
 
-			while (!_container.empty() && (spinDuration < timeoutDuration))
+			auto isEmpty = [&]() -> bool {
+				RLock _ {_containerMutex};
+				return _container.empty();
+			};
+
+			while (!isEmpty() && (spinDuration < timeoutDuration))
 			{
 				// Something is in the queue.. let's spinwait
 				std::this_thread::sleep_for(spinDuration);
