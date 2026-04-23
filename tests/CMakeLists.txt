@@ -28,10 +28,11 @@ if(${${PROJECT_NAME}_BUILD_TESTS})
     target_sources( ${TESTPROJ}
                     PRIVATE
                     ${PROJECT_SOURCE_DIR}/tests/queuetest.cpp
-                    ${PROJECT_SOURCE_DIR}/tests/test.cpp)
+                    ${PROJECT_SOURCE_DIR}/tests/test.cpp
+                    ${PROJECT_SOURCE_DIR}/tests/stress_test.cpp)
 
     # Dependencies
-    cpmaddpackage("gh:google/googletest#v1.15.2")
+    cpmaddpackage("gh:google/googletest#v1.17.0")
     target_link_libraries(${TESTPROJ} PRIVATE GTest::gtest_main)
     cpmaddpackage("gh:nlohmann/json#v3.11.3")
     target_link_libraries(${TESTPROJ} PRIVATE nlohmann_json::nlohmann_json)
