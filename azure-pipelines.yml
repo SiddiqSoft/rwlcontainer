@@ -62,13 +62,13 @@ stages:
         versionSpec: '>=6.0.0-0'
         checkLatest: true
 
-    - task: gitversion/setup@3
+    - task: gitversion-setup@4
       displayName: 'Install GitVersion..'
       inputs:
         versionSpec: '6.0'
         preferLatestVersion: true
 
-    - task: gitversion/execute@3
+    - task: gitversion-execute@4
       displayName: 'Determine Version..'
       name: version_step
       inputs:
@@ -109,6 +109,7 @@ stages:
       inputs:
         script: |
           echo "gcovr --delete --root ../../ --print-summary --xml-pretty --xml coverage.xml .  --filter='$(System.DefaultWorkingDirectory)/include/siddiqsoft/*' --filter='$(System.DefaultWorkingDirectory)/tests/*' --gcov-executable 'llvm-cov gcov'"
+          # echo "gcovr --delete --root $(System.DefaultWorkingDirectory)/ --print-summary --xml-pretty --xml $(System.DefaultWorkingDirectory)/build/$(cmake.preset)/tests/results/coverage.xml $(System.DefaultWorkingDirectory)/build/$(cmake.preset)  --filter='$(System.DefaultWorkingDirectory)/include/*' --filter='$(System.DefaultWorkingDirectory)/tests/*' --gcov-executable 'llvm-cov gcov'""
           gcovr --delete --root $(System.DefaultWorkingDirectory)/ --print-summary --xml-pretty --xml $(System.DefaultWorkingDirectory)/build/$(cmake.preset)/tests/results/coverage.xml $(System.DefaultWorkingDirectory)/build/$(cmake.preset)  --filter='$(System.DefaultWorkingDirectory)/include/*' --filter='$(System.DefaultWorkingDirectory)/tests/*' --gcov-executable 'llvm-cov gcov'
         workingDirectory: "$(System.DefaultWorkingDirectory)/build/$(cmake.preset)"
       condition: and(succeeded(), startsWith(variables['Agent.OS'], 'Linux'))
@@ -161,13 +162,13 @@ stages:
         - Agent.OS -equals $(osName)
 
     steps:
-    - task: gitversion/setup@3
+    - task: gitversion-setup@4
       displayName: 'Install GitVersion..'
       inputs:
         versionSpec: '6.0'
         preferLatestVersion: true
 
-    - task: gitversion/execute@3
+    - task: gitversion-execute@4
       displayName: 'Determine Version..'
       name: version_step
       inputs:
