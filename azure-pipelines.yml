@@ -9,7 +9,7 @@ trigger:
     include:
     - master
     - main
-    - bufix/*
+    - bugfix/*
     - release/*
     - hotfix/*
     - feature/*
@@ -79,13 +79,13 @@ stages:
     - task: CMake@1
       displayName: 'CMake Configure $(cmake.preset)'
       inputs:
-        cmakeArgs: '--preset $(cmake.preset) -DCI_BUILDID=$(GitVersion.MajorMinorPatch) -DCPM_SOURCE_CACHE=$(Agent.HomeDirectory)/.cpmcache'
+        cmakeArgs: '--preset $(cmake.preset) -DCI_BUILDID=$(GITVERSION_MAJORMINORPATCH) -DCPM_SOURCE_CACHE=$(Agent.HomeDirectory)/.cpmcache'
         workingDirectory: '$(System.DefaultWorkingDirectory)'
 
     - task: CMake@1
       displayName: 'CMake Build $(cmake.preset)'
       inputs:
-        cmakeArgs: '--build --preset $(cmake.preset) -DCI_BUILDID=$(GitVersion.MajorMinorPatch) -DCPM_SOURCE_CACHE=$(Agent.HomeDirectory)/.cpmcache'
+        cmakeArgs: '--build --preset $(cmake.preset) -DCI_BUILDID=$(GITVERSION_MAJORMINORPATCH) -DCPM_SOURCE_CACHE=$(Agent.HomeDirectory)/.cpmcache'
         workingDirectory: '$(System.DefaultWorkingDirectory)'
       condition: succeeded()
 
@@ -128,7 +128,7 @@ stages:
       displayName: 'Publish Coverage Results (Linux builds)'
       inputs:
         summaryFileLocation: '$(System.DefaultWorkingDirectory)/build/$(cmake.preset)/tests/results/coverage.*'
-      condition: and(succeeded(), startsWith(variables['Agent.OS'], 'Linux'))
+      condition: and(succeeded(), startsWith(variables['Agent.OS'], 'Linux'), startsWith(variables['Agent.OSArchitecture'], 'X64'))
 
 ################################## STAGE ####################################
 # STAGE: Pack_n_Publish                                                     #
@@ -183,12 +183,12 @@ stages:
       condition: and(succeeded(), startsWith(variables['Agent.OS'], 'Windows'))
 
     - task: NuGetCommand@2
-      displayName: 'NuGet pack v$(GitVersion.MajorMinorPatch)'
+      displayName: 'NuGet pack v$(GITVERSION_MAJORMINORPATCH)'
       inputs:
         command: 'pack'
         packagesToPack: 'pack/*.nuspec'
         versioningScheme: 'off'
-        buildProperties: 'VERSION=$(GitVersion.MajorMinorPatch)'
+        buildProperties: 'VERSION=$(GITVERSION_MAJORMINORPATCH)'
       condition: and(succeeded(), startsWith(variables['Agent.OS'], 'Windows'))
 
     - task: NuGetCommand@2
@@ -208,8 +208,8 @@ stages:
         action: 'create'
         target: '$(Build.SourceVersion)'
         tagSource: 'userSpecifiedTag'
-        tag: '$(GitVersion.MajorMinorPatch)'
-        title: 'v$(GitVersion.MajorMinorPatch)'
+        tag: '$(GITVERSION_MAJORMINORPATCH)'
+        title: 'v$(GITVERSION_MAJORMINORPATCH)'
         releaseNotesSource: 'inline'
         releaseNotesInline: '$(Build.Repository.Name) Documentation https://github.com/$(Build.Repository.Name)'
         isPreRelease: true
