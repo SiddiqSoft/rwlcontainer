@@ -7,36 +7,56 @@ RWLContainer : Reader-writer protected containers
 ![](https://img.shields.io/azure-devops/tests/siddiqsoft/siddiqsoft/8)
 ![](https://img.shields.io/azure-devops/coverage/siddiqsoft/siddiqsoft/8)
 
-# Objective
+# Overview
 
-## WaitableQueue
-- Implements a thread-safe `queue`
-- Any number of threads can `tryWaitItem` with a given timeout on the object.
-- The queue *must* be given ownership of the `StorageType` and the thread receiving the object is going to destroy the object.
+This library provides convenient, production-ready wrappers around C++20 standard library synchronization primitives:
 
-## RWLContainer
-- Avoid re-implementing the rw-lock; standard C++ (since C++14) has a good reader-writer lock implementation.
-- Provide a simple, convenience layer for dictionary containers.
-- The internal storage type is a `std::shared_ptr<>`
+- **RWLContainer**: A reader-writer lock protected dictionary that wraps `std::unordered_map` with `std::shared_mutex` for safe concurrent access
+- **WaitableQueue**: A thread-safe queue that augments `std::queue` with `std::shared_mutex` and `std::counting_semaphore` for efficient producer-consumer patterns
+
+These classes eliminate boilerplate synchronization code and provide a simple, type-safe API for common concurrent programming scenarios.
 
 ## Requirements
-- You must be able to use [`<shared_mutex>`](https://en.cppreference.com/w/cpp/thread/shared_mutex) and [`<mutex>`](https://en.cppreference.com/w/cpp/thread/mutex).
-- Minimal target is `C++20`.
-- We use [`nlohmann::json`](https://github.com/nlohmann/json) only in our tests and the library is aware to provide a conversion operator if library is detected.
-- CMake build system with development on MacOSX, Linux (Fedora) and Windows (VS2022).
+
+- C++20 or later
+- [`<shared_mutex>`](https://en.cppreference.com/w/cpp/thread/shared_mutex) and [`<mutex>`](https://en.cppreference.com/w/cpp/thread/mutex) support
+- CMake 3.20+
+
+## Platform Support
+
+Tested and built on:
+- **Windows** (Visual Studio 2022)
+- **Linux** (Fedora)
+- **macOS**
+
+All platforms are tested in the CI/CD pipeline with comprehensive test coverage.
+
+## Testing
+
+- Unit tests using Google Test (gtest)
+- Code coverage reporting (Linux builds)
+- Automated testing on all supported platforms via Azure Pipelines
+- Stress testing included in test suite
+
+## Versioning
+
+Uses [GitVersion](https://gitversion.net/) for semantic versioning (`MAJOR.MINOR.PATCH`). Version is automatically determined from git history.
+
+# API Documentation
+
+For detailed API documentation, method signatures, and comprehensive examples, see [API.md](API.md).
 
 # Usage
 
 - Use the nuget [SiddiqSoft.RWLContainer](https://www.nuget.org/packages/SiddiqSoft.RWLContainer/)
-- Use CPM to integrate into you CMake project
+- Use CPM to integrate into your CMake project
 
+## Quick Example
 
-## Examples
 ```cpp
 #include "gtest/gtest.h"
 #include "nlohmann/json.hpp"
 #include "siddiqsoft/RWLContainer.hpp"
-
 
 TEST(examples, Example1)
 {
@@ -54,8 +74,6 @@ TEST(examples, Example1)
     }
 }
 ```
-
-
 
 <small align="right">
 
