@@ -39,16 +39,16 @@ stages:
           poolName: Default
           poolImageName:
           cmake.preset: Windows-Release
-        Linux-Clang:
-          osName: Linux
-          poolName: Default
-          poolImageName:
-          cmake.preset: Linux-Release
         Linux-GCC:
           osName: Linux
           poolName: Default
           poolImageName:
           cmake.preset: Linux-GCC-Release
+        Linux-Clang:
+          osName: Linux
+          poolName: Default
+          poolImageName:
+          cmake.preset: Linux-Release
 
     pool:
       name: $(poolName)
