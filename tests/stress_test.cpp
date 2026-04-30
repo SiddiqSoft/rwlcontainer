@@ -66,8 +66,9 @@ struct StressItem
 
 using StressItemPtr = std::shared_ptr<StressItem>;
 
-static constexpr int WRITER_THREADS  = 4;
-static constexpr int READER_THREADS  = 8;
+// Use modest numbers to allow small build machines to perform the run without huge delays
+static constexpr int WRITER_THREADS  = 2;
+static constexpr int READER_THREADS  = 4;
 static constexpr int ITEMS_PER_THREAD = 5000;
 
 

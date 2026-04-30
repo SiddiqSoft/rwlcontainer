@@ -10,7 +10,7 @@ if(${${PROJECT_NAME}_BUILD_TESTS})
                             PRIVATE
                             $<$<CXX_COMPILER_ID:Clang>:-fexperimental-library> )
     
-    if(CMAKE_CXX_COMPILER_ID MATCHES [Cc][Ll][Aa][Nn][Gg])
+    if(CMAKE_CXX_COMPILER_ID MATCHES [Cc][Ll][Aa][Nn][Gg] AND NOT CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
         message(STATUS "Using sanitizers for leak and address on ${CMAKE_CXX_COMPILER_ID}")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address,leak")
         target_link_libraries(${TESTPROJ} PRIVATE -fsanitize=address,leak)
@@ -34,9 +34,9 @@ if(${${PROJECT_NAME}_BUILD_TESTS})
     # Dependencies
     cpmaddpackage("gh:google/googletest#v1.17.0")
     target_link_libraries(${TESTPROJ} PRIVATE GTest::gtest_main)
-    cpmaddpackage("gh:nlohmann/json#v3.11.3")
+    cpmaddpackage("gh:nlohmann/json#v3.12.0")
     target_link_libraries(${TESTPROJ} PRIVATE nlohmann_json::nlohmann_json)
-    cpmaddpackage("gh:siddiqsoft/RunOnEnd#1.4.0")
+    cpmaddpackage("gh:siddiqsoft/RunOnEnd#1.4.2")
     target_link_libraries(${TESTPROJ} PRIVATE RunOnEnd::RunOnEnd)
 
     include(GoogleTest)
