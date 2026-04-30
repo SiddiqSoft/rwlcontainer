@@ -51,8 +51,8 @@
         },
         {
             "name": "Linux-Debug",
-            "displayName": "Linux Debug",
-            "description": "Target Linux (Debug)",
+            "displayName": "Linux Debug (Clang)",
+            "description": "Target Linux (Debug) with Clang",
             "generator": "Unix Makefiles",
             "binaryDir": "${sourceDir}/build/${presetName}",
             "installDir": "${sourceDir}/install/${presetName}",
@@ -75,8 +75,8 @@
         },
         {
             "name": "Linux-Release",
-            "displayName": "Linux Release",
-            "description": "Target Linux (Release)",
+            "displayName": "Linux Release (Clang)",
+            "description": "Target Linux (Release) with Clang",
             "generator": "Unix Makefiles",
             "binaryDir": "${sourceDir}/build/${presetName}",
             "installDir": "${sourceDir}/install/${presetName}",
@@ -85,6 +85,54 @@
                 "CMAKE_BUILD_TYPE": "Release",
                 "CMAKE_C_COMPILER": "/usr/bin/clang",
                 "CMAKE_CXX_COMPILER": "/usr/bin/clang++"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            },
+            "vendor": {
+                "microsoft.com/VisualStudioRemoteSettings/CMake/2.0": {
+                    "remoteSourceRootDir": "$env{HOME}/.vs/$ms{projectDirName}"
+                }
+            }
+        },
+        {
+            "name": "Linux-GCC-Debug",
+            "displayName": "Linux Debug (GCC)",
+            "description": "Target Linux (Debug) with GCC",
+            "generator": "Unix Makefiles",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "installDir": "${sourceDir}/install/${presetName}",
+            "inherits": "Project-Base",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_C_COMPILER": "/usr/bin/gcc",
+                "CMAKE_CXX_COMPILER": "/usr/bin/g++"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            },
+            "vendor": {
+                "microsoft.com/VisualStudioRemoteSettings/CMake/2.0": {
+                    "remoteSourceRootDir": "$env{HOME}/.vs/$ms{projectDirName}"
+                }
+            }
+        },
+        {
+            "name": "Linux-GCC-Release",
+            "displayName": "Linux Release (GCC)",
+            "description": "Target Linux (Release) with GCC",
+            "generator": "Unix Makefiles",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "installDir": "${sourceDir}/install/${presetName}",
+            "inherits": "Project-Base",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_C_COMPILER": "/usr/bin/gcc",
+                "CMAKE_CXX_COMPILER": "/usr/bin/g++"
             },
             "condition": {
                 "type": "equals",
@@ -156,6 +204,14 @@
             "configurePreset": "Linux-Release"
         },
         {
+            "name": "Linux-GCC-Debug",
+            "configurePreset": "Linux-GCC-Debug"
+        },
+        {
+            "name": "Linux-GCC-Release",
+            "configurePreset": "Linux-GCC-Release"
+        },
+        {
             "name": "Windows-Debug",
             "configurePreset": "Windows-Debug"
         },
@@ -201,6 +257,28 @@
         {
             "name": "Linux-Release",
             "configurePreset": "Linux-Release",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error",
+                "stopOnFailure": true
+            }
+        },
+        {
+            "name": "Linux-GCC-Debug",
+            "configurePreset": "Linux-GCC-Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error",
+                "stopOnFailure": true
+            }
+        },
+        {
+            "name": "Linux-GCC-Release",
+            "configurePreset": "Linux-GCC-Release",
             "output": {
                 "outputOnFailure": true
             },
