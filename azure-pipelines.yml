@@ -39,16 +39,26 @@ stages:
           poolName: Default
           poolImageName:
           cmake.preset: Windows-Release
-        Linux-GCC:
+        Linux-Clang-Debug:
           osName: Linux
           poolName: Default
           poolImageName:
-          cmake.preset: Linux-GCC-Release
-        Linux-Clang:
+          cmake.preset: Linux-Debug
+        Linux-GCC-Debug:
+          osName: Linux
+          poolName: Default
+          poolImageName:
+          cmake.preset: Linux-GCC-Debug
+        Linux-Clang-Release:
           osName: Linux
           poolName: Default
           poolImageName:
           cmake.preset: Linux-Release
+        Linux-GCC-Release:
+          osName: Linux
+          poolName: Default
+          poolImageName:
+          cmake.preset: Linux-GCC-Release
 
     pool:
       name: $(poolName)
@@ -154,7 +164,7 @@ stages:
           poolName: Default
           poolImageName:
           cmake.preset: Windows-Release
-        Linux-Clang:
+        Linux-Clang-Release:
           osName: Linux
           poolName: Default
           poolImageName:
