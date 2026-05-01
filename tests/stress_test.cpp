@@ -262,7 +262,7 @@ TEST(RWLContainerStress, ConcurrentAddRemove)
 /// On ARM64 platforms, we use a timeout to prevent potential deadlocks.
 TEST(RWLContainerStress, ConcurrentScanAndWrite)
 {
-#if __linux0__
+#if __linux__
 	GTEST_SKIP() << "Issue with Linux platform! Windows works (arm64). Darwin works (arm64).";
 #endif
 	
