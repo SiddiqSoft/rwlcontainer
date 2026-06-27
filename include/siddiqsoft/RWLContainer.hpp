@@ -193,7 +193,7 @@ namespace siddiqsoft
 			                       {"removes", _counterRemoves.load()},
 			                       {"ReplaceExisting", ReplaceExisting},
 			                       {"FailOnCollission", FailOnCollission},
-			                       {"size", _container.size()}};
+			                       {"size", size()}};
 		}
 #endif
 
