@@ -139,7 +139,8 @@ namespace siddiqsoft
 			constexpr std::chrono::milliseconds spinInterval {32};
 			std::chrono::milliseconds           spinDuration {32};
 
-			auto isEmpty = [&]() -> bool {
+			auto isEmpty = [&]() -> bool
+			{
 				RLock _ {_containerMutex};
 				return _container.empty();
 			};
@@ -221,10 +222,8 @@ namespace siddiqsoft
 		// If the JSON library is included in the current project, then make the serializer available.
 		nlohmann::json toJson()
 		{
-			return nlohmann::json {{"_typver", "WaitableQueue/1.0.0"},
-			                       {"adds", _counterAdds},
-			                       {"removes", _counterRemoves},
-			                       {"size", _container.size()}};
+			return nlohmann::json {
+					{"_typver", "WaitableQueue/1.0.0"}, {"adds", _counterAdds}, {"removes", _counterRemoves}, {"size", size()}};
 		}
 #endif
 

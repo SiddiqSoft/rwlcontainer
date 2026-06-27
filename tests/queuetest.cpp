@@ -44,6 +44,9 @@ public:
 	}
 };
 
+
+// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+
 TEST(WaitableQueueTests, CustomObject)
 {
 	siddiqsoft::WaitableQueue<MyTestObject> myContainer1;
@@ -639,3 +642,4 @@ TEST(WaitableQueueTests, SingleProducerSingleConsumer)
 	EXPECT_EQ(static_cast<uint64_t>(ITEM_COUNT), consumed.load());
 	EXPECT_EQ(static_cast<uint64_t>(ITEM_COUNT), queue.removeCounter());
 }
+// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)

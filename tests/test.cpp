@@ -48,6 +48,8 @@ struct MyItem
 
 using MyItemPtr = std::shared_ptr<MyItem>;
 
+// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+
 TEST(RWContainer_add, BasicAdd)
 {
 	try
@@ -753,3 +755,5 @@ TEST(RWContainer_add, AllThreeOverloads)
 
 	EXPECT_EQ(3u, myContainer.size());
 }
+
+// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)

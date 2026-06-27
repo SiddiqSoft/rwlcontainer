@@ -76,6 +76,8 @@ static constexpr int ITEMS_PER_THREAD = 5000;
 // RWLContainer stress tests
 // ============================================================================
 
+// NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+
 /// Multiple threads adding distinct keys concurrently.
 /// Validates that every key is present after all writers finish.
 TEST(RWLContainerStress, ConcurrentAdds)
@@ -1169,3 +1171,5 @@ TEST(WaitableQueueStress, WaitUntilEmptyTightLoopContention)
 	std::cout << std::format("WaitUntilEmptyTightLoopContention: adds={} consumed={} waitCalls={} remaining={}\n",
 	                         queue.addCounter(), totalConsumed.load(), totalWaitCalls.load(), queue.size());
 }
+
+// NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)

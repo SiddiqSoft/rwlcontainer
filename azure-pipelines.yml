@@ -26,12 +26,12 @@ trigger:
       - main
       - master
       - development
-      - develop
+      - devel
       - release/*
   paths:
     exclude:
       - README.md
-      - .ci/* # Skip CI when changing pipeline files
+      - .azure/*
       - azure-pipelines.yml # Avoids recursive triggers when modifying the pipeline itself
 pr:
   branches:
@@ -53,7 +53,7 @@ resources:
 parameters:
   - name: Architectures
     type: stringList
-    default: [ arm64 ]
+    default: [ arm64, x64 ]
     values: [ arm64, x64 ]
     displayName: "Architectures to build (x64, arm64)"
   
@@ -146,13 +146,13 @@ stages:
 
     jobs:
     - ${{ if eq(parameters.Cleanup, true) }}:
-      - template: .ci/az-cleanup-windows.yml
+      - template: .azure/az-cleanup-windows.yml
         parameters:
           displayName: "Windows Cleanup"
           BuildOperatingSystem: $(Agent.OS)
           CleanupDirectory: ${{ variables.cpmCachePath }}
 
-    - template: .ci/az-build-windows.yml
+    - template: .azure/az-build-windows.yml
       parameters:
         displayName: "Windows Build and Test"
         architectures: ${{ parameters.Architectures }}
@@ -171,13 +171,13 @@ stages:
 
     jobs:
     - ${{ if eq(parameters.Cleanup, true) }}:
-      - template: .ci/az-cleanup-linux.yml
+      - template: .azure/az-cleanup-linux.yml
         parameters:
           displayName: "Linux Cleanup"
           BuildOperatingSystem: $(Agent.OS)
           CleanupDirectory: ${{ variables.cpmCachePath }}
 
-    - template: .ci/az-build-linux.yml
+    - template: .azure/az-build-linux.yml
       parameters:
         displayName: "Linux Build and Test"
         architectures: ${{ parameters.Architectures }}
@@ -196,12 +196,12 @@ stages:
     condition: and(or(eq(${{ variables.PublishGitHub }}, true), eq(${{ variables.PublishNuGet }}, true)), succeeded())
     jobs:
       - ${{ if eq(variables.PublishNuGet, true) }}:
-        - template: .ci/az-publish-nuget.yml
+        - template: .azure/az-publish-nuget.yml
           parameters:
             displayName: NuGet Release
             PublishNuGet: ${{ variables.PublishNuGet }}
   
-      - template: .ci/az-publish-github.yml
+      - template: .azure/az-publish-github.yml
         parameters:
           displayName: GitHub Release
           PublishGitHub: ${{ variables.PublishGitHub }}

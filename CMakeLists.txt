@@ -2,16 +2,16 @@
 #   Copyright 2024 Abdulkareem Siddiq. All rights reserved.
 #   See LICENSE file
 #
-#   When building from our CI server, the following options must be set
-#   BUILD_TESTS ON
-#   CI_BUILDID must be set to the gitversion
+#   When building from our CI server, the following options must be set:
+#   - RWLContainer_BUILD_TESTS=ON
+#   - CI_BUILDID must be set to the gitversion
 # 
 cmake_minimum_required(VERSION 3.25)
 
 # _________________
 # Version detection; must preceed the declaration of the actual project()
 # Figures out the value ${CURRENT_PROJECT_VERSION} and therefore the ${PROJECT_VERSION}
-# Brings in the CPM module into pack/CPM.make
+# Brings in the CPM module into pack/CMakeCommonHelpers.cmake
 include(pack/CMakeCommonHelpers.cmake)
 
 # ______________________
@@ -36,13 +36,10 @@ target_include_directories(${PROJECT_NAME}
                             INTERFACE
                             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
-target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
 
-# For std::stop_token and std::jthread on Clang 18 and Clang 19 we need to enable
-# the experimental-library flag.
-target_compile_options( ${PROJECT_NAME}
-                        INTERFACE
-                        $<$<CXX_COMPILER_ID:Clang>:-fexperimental-library> )
+# Require C++17 minimum (uses std::shared_mutex, std::tuple, std::shared_lock, std::unique_lock)
+target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
+
 
 # ____________________________________
 # Dependencies

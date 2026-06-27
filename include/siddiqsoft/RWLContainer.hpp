@@ -77,8 +77,8 @@ namespace siddiqsoft
 
 			// Item not found.. ReplaceExisting=> true and FailOnCollission=> false
 			if (auto [iter, rv] = _container.insert_or_assign(key, std::make_shared<StorageType>(std::move(value)));
-			    iter != _container.end())                            // insert/assign new item
-				return _counterAdds++ ? iter->second : iter->second; // shortcut expression
+			    iter != _container.end())            // insert/assign new item
+				return _counterAdds++, iter->second; // shortcut expression
 
 			throw std::runtime_error(std::format("{} - Failed to add for key:{}", __FUNCTION__, key));
 		}
@@ -100,8 +100,9 @@ namespace siddiqsoft
 				return itemFound->second;
 
 			// Item not found.. ReplaceExisting=> true and FailOnCollission=> false
-			if (auto [iter, rv] = _container.insert_or_assign(key, std::move(value)); iter != _container.end()) // insert/assign new item
-				return _counterAdds++ ? iter->second : iter->second;                                            // shortcut expression
+			if (auto [iter, rv] = _container.insert_or_assign(key, std::move(value));
+			    iter != _container.end())                            // insert/assign new item
+				return _counterAdds++ ? iter->second : iter->second; // shortcut expression
 
 			throw std::runtime_error(std::format("{} - Failed to add for key:{}", __FUNCTION__, key));
 		}
@@ -162,7 +163,7 @@ namespace siddiqsoft
 		}
 
 
-		auto size() const
+		auto size() const -> size_t
 		{
 			std::shared_lock<std::shared_mutex> myReaderLock(_containerMutex);
 
