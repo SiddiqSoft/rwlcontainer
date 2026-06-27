@@ -56,7 +56,7 @@ TEST(RWContainer_add, BasicAdd)
 	{
 		siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 
-		auto item = myContainer.add("foo", {1, "bar"});
+		auto item = myContainer.add("foo", {.flag = 1, .name = "bar"});
 		ASSERT_TRUE(item);
 		EXPECT_EQ("bar", item->name);
 	}
@@ -72,14 +72,15 @@ TEST(RWContainer_add, BasicAddINE_Collision)
 	{
 		siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 
-		auto item = myContainer.add("foo", {1, "bar"});
+		auto item = myContainer.add("foo", {.flag = 1, .name = "bar"});
 		ASSERT_TRUE(item);
 		EXPECT_EQ("bar", item->name);
-		auto item2 = myContainer.add(
-				"foo", [&](auto& key) -> auto {
-					EXPECT_FALSE(true) << "Should not be invoked";
-					return std::make_shared<MyItem>(MyItem {0, key});
-				});
+		auto item2 = myContainer.add("foo",
+		                             [&](auto& key) -> auto
+		                             {
+										 EXPECT_FALSE(true) << "Should not be invoked";
+										 return std::make_shared<MyItem>(MyItem {0, key});
+									 });
 		EXPECT_EQ(item, item2);
 	}
 	catch (...)
@@ -94,13 +95,10 @@ TEST(RWContainer_add, BasicAddINE_Ok)
 	{
 		siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 
-		auto item = myContainer.add("foo", {1, "bar"});
+		auto item = myContainer.add("foo", {.flag = 1, .name = "bar"});
 		ASSERT_TRUE(item);
 		EXPECT_EQ("bar", item->name);
-		auto item2 = myContainer.add(
-				"good", [&](auto& key) -> auto {
-					return std::make_shared<MyItem>(MyItem {2, key});
-				});
+		auto item2 = myContainer.add("good", [&](auto& key) -> auto { return std::make_shared<MyItem>(MyItem {2, key}); });
 		EXPECT_NE(item, item2);
 		EXPECT_EQ("good", item2->name);
 	}
@@ -116,13 +114,13 @@ TEST(RWContainer_add, BasicAddFail)
 	{
 		siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 
-		auto item1 = myContainer.add("foo", {1, "bar"});
+		auto item1 = myContainer.add("foo", {.flag = 1, .name = "bar"});
 		ASSERT_TRUE(item1);
 		EXPECT_EQ("bar", item1->name);
 
 		myContainer.FailOnCollission = true;
 
-		auto item2 = myContainer.add("foo", {2, "baz"});
+		auto item2 = myContainer.add("foo", {.flag = 2, .name = "baz"});
 		ASSERT_FALSE(item2);
 	}
 	catch (...)
@@ -137,12 +135,12 @@ TEST(RWContainer_add, BasicAddCollissionAllow)
 	{
 		siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 		// Add an item.
-		auto item = myContainer.add("foo", {1, "bar"});
+		auto item = myContainer.add("foo", {.flag = 1, .name = "bar"});
 		ASSERT_TRUE(item);
 		EXPECT_TRUE(item->name == "bar");
 		// Add the item with new content for same key.
 		myContainer.ReplaceExisting = true;
-		auto item2                  = myContainer.add("foo", {2, "BAR"});
+		auto item2                  = myContainer.add("foo", {.flag = 2, .name = "BAR"});
 		EXPECT_TRUE(item2->name == "BAR");
 		// We should have added with collission.
 		EXPECT_TRUE(myContainer.size() == 1);
@@ -188,19 +186,19 @@ TEST(RWContainer_find, BasicFindOKLargeSet)
 {
 	try
 	{
-		const int                                    ITEM_COUNT    = 20000;
-		auto                                         hasCollission = false;
+		const int                                     ITEM_COUNT    = 20000;
+		auto                                          hasCollission = false;
 		siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 
 		// Add an item.
 		{
 			for (auto i = 0; i < ITEM_COUNT; i++)
 			{
-				auto item = myContainer.add(std::string("foo_").append(std::to_string(i + 1)), {i, "bar"});
+				auto item = myContainer.add(std::string("foo_").append(std::to_string(i + 1)), {.flag = i, .name = "bar"});
 				EXPECT_TRUE(item);
 			}
 			// Add an item.
-			auto item = myContainer.add("FOO", {1, "bard"});
+			auto item = myContainer.add("FOO", {.flag = 1, .name = "bard"});
 			EXPECT_TRUE(item);
 			EXPECT_TRUE(item->name == "bard");
 		}
@@ -224,7 +222,7 @@ TEST(RWContainer_find, BasicFindNegative)
 		siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 
 		// Add an item.
-		auto item = myContainer.add("foo", {1, "bar"});
+		auto item = myContainer.add("foo", {.flag = 1, .name = "bar"});
 		EXPECT_TRUE(item->name == "bar");
 		auto myItem = myContainer.find("-not-exist-");
 		EXPECT_FALSE(myItem);
@@ -243,7 +241,7 @@ TEST(RWContainer_remove, BasicRemoveOK)
 		siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 
 		// Add an item.
-		auto item = myContainer.add("foo", {1, "bar"});
+		auto item = myContainer.add("foo", {.flag = 1, .name = "bar"});
 		EXPECT_TRUE(item);
 		EXPECT_TRUE(item->name == "bar");
 
@@ -262,11 +260,11 @@ TEST(RWContainer_remove, BasicRemoveNegative)
 {
 	try
 	{
-		auto                                         hasCollission = false;
+		auto                                          hasCollission = false;
 		siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 
 		// Add an item.
-		auto item = myContainer.add("foo", {1, "bar"});
+		auto item = myContainer.add("foo", {.flag = 1, .name = "bar"});
 		EXPECT_TRUE(item->name == "bar");
 
 		// Remove the item.
@@ -292,19 +290,21 @@ TEST(RWContainer_scan, BasicScanBuildJSONOK)
 		{
 			for (auto i = 0; i < ITEM_COUNT; i++)
 			{
-				auto item = myContainer.add(std::string("foo_").append(std::to_string(i + 1)), {i, "bar"});
+				auto item = myContainer.add(std::string("foo_").append(std::to_string(i + 1)), {.flag = i, .name = "bar"});
 				EXPECT_TRUE(item);
 			}
 		}
 		EXPECT_EQ(ITEM_COUNT, myContainer.size());
 
 		{
-			myContainer.scan([&doc](const auto& key, auto& val) -> bool {
-				// we're already inside the lock
-				// build our json.. basically, we're performing a copy
-				doc.push_back({{"id", key}, {"flag", val->flag}, {"name", val->name}});
-				return false;
-			});
+			myContainer.scan(
+					[&doc](const auto& key, auto& val) -> bool
+					{
+						// we're already inside the lock
+						// build our json.. basically, we're performing a copy
+						doc.push_back({{"id", key}, {"flag", val->flag}, {"name", val->name}});
+						return false;
+					});
 		}
 
 		EXPECT_EQ(ITEM_COUNT, doc.size());
@@ -329,22 +329,24 @@ TEST(RWContainer_scan, BasicScanOK)
 		{
 			for (auto i = 0; i < ITEM_COUNT; i++)
 			{
-				auto item = myContainer.add(std::string("foo_").append(std::to_string(i + 1)), {i, "bar"});
+				auto item = myContainer.add(std::string("foo_").append(std::to_string(i + 1)), {.flag = i, .name = "bar"});
 				EXPECT_TRUE(item);
 			}
 		}
 		EXPECT_TRUE(myContainer.size() == ITEM_COUNT);
 
 		// Add item at the end to force a scan for this in the custom find.
-		auto item = myContainer.add("UNIQUE-ITEM", {9999999, "uniquebar"});
+		auto item = myContainer.add("UNIQUE-ITEM", {.flag = 9999999, .name = "uniquebar"});
 		EXPECT_TRUE(item);
 
 		{
-			auto myItem = myContainer.scan([&](const auto& key, auto& val) -> bool {
-				// we're already inside the lock
-				scanIteration++;
-				return (key == "UNIQUE-ITEM") && (val->flag == 9999999);
-			});
+			auto myItem = myContainer.scan(
+					[&](const auto& key, auto& val) -> bool
+					{
+						// we're already inside the lock
+						scanIteration++;
+						return (key == "UNIQUE-ITEM") && (val->flag == 9999999);
+					});
 			EXPECT_TRUE(myItem);
 			EXPECT_TRUE(myItem->name == "uniquebar");
 		}
@@ -359,17 +361,17 @@ TEST(RWContainer_scan, BasicScanNegative)
 {
 	try
 	{
-		const int                                    ITEM_COUNT = 20000;
-		uint64_t                                     ttxAdd {0};
-		uint64_t                                     ttxScan {0};
-		auto                                         hasCollission = false;
+		const int                                     ITEM_COUNT = 20000;
+		uint64_t                                      ttxAdd {0};
+		uint64_t                                      ttxScan {0};
+		auto                                          hasCollission = false;
 		siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 
 		// Add a bunch of items.
 		{
 			for (auto i = 0; i < ITEM_COUNT; i++)
 			{
-				auto item = myContainer.add(std::string("foo_").append(std::to_string(i + 1)), {i, "bar"});
+				auto item = myContainer.add(std::string("foo_").append(std::to_string(i + 1)), {.flag = i, .name = "bar"});
 				EXPECT_TRUE(item);
 			}
 		}
@@ -377,10 +379,12 @@ TEST(RWContainer_scan, BasicScanNegative)
 
 		// This will in effect scan the entire list without finding anything.
 		{
-			auto myItem = myContainer.scan([](const auto& key, auto& val) -> bool {
-				// we're already inside the lock
-				return key == "-not-found-";
-			});
+			auto myItem = myContainer.scan(
+					[](const auto& key, auto& val) -> bool
+					{
+						// we're already inside the lock
+						return key == "-not-found-";
+					});
 			EXPECT_FALSE(myItem); // should not find anything
 		}
 	}
@@ -401,7 +405,7 @@ TEST(RWContainer_add, AddSharedPtr)
 {
 	siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 
-	auto ptr  = std::make_shared<MyItem>(MyItem {42, "shared"});
+	auto ptr  = std::make_shared<MyItem>(MyItem {.flag = 42, .name = "shared"});
 	auto item = myContainer.add("key1", std::move(ptr));
 	ASSERT_TRUE(item);
 	EXPECT_EQ("shared", item->name);
@@ -413,12 +417,12 @@ TEST(RWContainer_add, AddSharedPtr_CollisionReturnsExisting)
 {
 	siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 
-	auto ptr1  = std::make_shared<MyItem>(MyItem {1, "first"});
+	auto ptr1  = std::make_shared<MyItem>(MyItem {.flag = 1, .name = "first"});
 	auto item1 = myContainer.add("key1", std::move(ptr1));
 	ASSERT_TRUE(item1);
 
 	// Default: FailOnCollission=false, ReplaceExisting=false => returns existing
-	auto ptr2  = std::make_shared<MyItem>(MyItem {2, "second"});
+	auto ptr2  = std::make_shared<MyItem>(MyItem {.flag = 2, .name = "second"});
 	auto item2 = myContainer.add("key1", std::move(ptr2));
 	ASSERT_TRUE(item2);
 	EXPECT_EQ("first", item2->name); // should be the original
@@ -431,11 +435,11 @@ TEST(RWContainer_add, AddSharedPtr_FailOnCollision)
 	siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 	myContainer.FailOnCollission = true;
 
-	auto ptr1  = std::make_shared<MyItem>(MyItem {1, "first"});
+	auto ptr1  = std::make_shared<MyItem>(MyItem {.flag = 1, .name = "first"});
 	auto item1 = myContainer.add("key1", std::move(ptr1));
 	ASSERT_TRUE(item1);
 
-	auto ptr2  = std::make_shared<MyItem>(MyItem {2, "second"});
+	auto ptr2  = std::make_shared<MyItem>(MyItem {.flag = 2, .name = "second"});
 	auto item2 = myContainer.add("key1", std::move(ptr2));
 	EXPECT_FALSE(item2); // collision => nullptr
 	EXPECT_EQ(1u, myContainer.size());
@@ -446,12 +450,12 @@ TEST(RWContainer_add, AddSharedPtr_ReplaceExisting)
 	siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 	myContainer.ReplaceExisting = true;
 
-	auto ptr1  = std::make_shared<MyItem>(MyItem {1, "first"});
+	auto ptr1  = std::make_shared<MyItem>(MyItem {.flag = 1, .name = "first"});
 	auto item1 = myContainer.add("key1", std::move(ptr1));
 	ASSERT_TRUE(item1);
 	EXPECT_EQ("first", item1->name);
 
-	auto ptr2  = std::make_shared<MyItem>(MyItem {2, "replaced"});
+	auto ptr2  = std::make_shared<MyItem>(MyItem {.flag = 2, .name = "replaced"});
 	auto item2 = myContainer.add("key1", std::move(ptr2));
 	ASSERT_TRUE(item2);
 	EXPECT_EQ("replaced", item2->name);
@@ -465,17 +469,17 @@ TEST(RWContainer_add, AddCallback_FailOnCollision)
 	siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 	myContainer.FailOnCollission = true;
 
-	auto item1 = myContainer.add("key1", MyItem {1, "first"});
+	auto item1 = myContainer.add("key1", MyItem {.flag = 1, .name = "first"});
 	ASSERT_TRUE(item1);
 
 	bool callbackInvoked = false;
-	auto item2           = myContainer.add(
-            "key1",
-            [&](const std::string& key) -> MyItemPtr {
-                callbackInvoked = true;
-                return std::make_shared<MyItem>(MyItem {2, key});
-            });
-	EXPECT_FALSE(item2);          // collision => nullptr
+	auto item2           = myContainer.add("key1",
+	                                       [&](const std::string& key) -> MyItemPtr
+	                                       {
+									 callbackInvoked = true;
+									 return std::make_shared<MyItem>(MyItem {.flag = 2, .name = key});
+										   });
+	EXPECT_FALSE(item2);           // collision => nullptr
 	EXPECT_FALSE(callbackInvoked); // callback should NOT be invoked
 }
 
@@ -484,16 +488,16 @@ TEST(RWContainer_add, AddCallback_ReplaceExisting)
 	siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 	myContainer.ReplaceExisting = true;
 
-	auto item1 = myContainer.add("key1", MyItem {1, "first"});
+	auto item1 = myContainer.add("key1", MyItem {.flag = 1, .name = "first"});
 	ASSERT_TRUE(item1);
 
 	bool callbackInvoked = false;
-	auto item2           = myContainer.add(
-            "key1",
-            [&](const std::string& key) -> MyItemPtr {
-                callbackInvoked = true;
-                return std::make_shared<MyItem>(MyItem {99, "replaced-via-callback"});
-            });
+	auto item2           = myContainer.add("key1",
+	                                       [&](const std::string& key) -> MyItemPtr
+	                                       {
+									 callbackInvoked = true;
+									 return std::make_shared<MyItem>(MyItem {.flag = 99, .name = "replaced-via-callback"});
+										   });
 	ASSERT_TRUE(item2);
 	EXPECT_TRUE(callbackInvoked);
 	EXPECT_EQ("replaced-via-callback", item2->name);
@@ -521,10 +525,12 @@ TEST(RWContainer_scan, ScanOnEmptyContainer)
 {
 	siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 	bool                                          callbackInvoked = false;
-	auto                                          item            = myContainer.scan([&](const auto& key, auto& val) -> bool {
-        callbackInvoked = true;
-        return true;
-    });
+	auto                                          item            = myContainer.scan(
+			[&](const auto& key, auto& val) -> bool
+			{
+				callbackInvoked = true;
+				return true;
+			});
 	EXPECT_FALSE(item);
 	EXPECT_FALSE(callbackInvoked);
 }
@@ -538,8 +544,8 @@ TEST(RWContainer_size, SizeOnEmptyContainer)
 TEST(RWContainer_size, SizeAfterAddAndRemove)
 {
 	siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
-	myContainer.add("a", MyItem {1, "alpha"});
-	myContainer.add("b", MyItem {2, "beta"});
+	myContainer.add("a", MyItem {.flag = 1, .name = "alpha"});
+	myContainer.add("b", MyItem {.flag = 2, .name = "beta"});
 	EXPECT_EQ(2u, myContainer.size());
 
 	[[maybe_unused]] auto ra = myContainer.remove("a");
@@ -555,9 +561,9 @@ TEST(RWContainer_map, AddFindRemoveWithOrderedMap)
 {
 	siddiqsoft::RWLContainer<std::string, MyItem, std::map<std::string, std::shared_ptr<MyItem>>> myContainer;
 
-	auto item1 = myContainer.add("charlie", MyItem {3, "Charlie"});
-	auto item2 = myContainer.add("alpha", MyItem {1, "Alpha"});
-	auto item3 = myContainer.add("bravo", MyItem {2, "Bravo"});
+	auto item1 = myContainer.add("charlie", MyItem {.flag = 3, .name = "Charlie"});
+	auto item2 = myContainer.add("alpha", MyItem {.flag = 1, .name = "Alpha"});
+	auto item3 = myContainer.add("bravo", MyItem {.flag = 2, .name = "Bravo"});
 
 	ASSERT_TRUE(item1);
 	ASSERT_TRUE(item2);
@@ -575,10 +581,12 @@ TEST(RWContainer_map, AddFindRemoveWithOrderedMap)
 
 	// Scan should work with ordered map
 	std::vector<std::string> keys;
-	myContainer.scan([&](const auto& key, auto& val) -> bool {
-		keys.push_back(key);
-		return false;
-	});
+	myContainer.scan(
+			[&](const auto& key, auto& val) -> bool
+			{
+				keys.push_back(key);
+				return false;
+			});
 	EXPECT_EQ(2u, keys.size());
 	// std::map iterates in sorted order
 	EXPECT_EQ("bravo", keys[0]);
@@ -591,9 +599,9 @@ TEST(RWContainer_diag, ToJSON_AfterOperations)
 {
 	siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 
-	myContainer.add("a", MyItem {1, "alpha"});
-	myContainer.add("b", MyItem {2, "beta"});
-	myContainer.add("c", MyItem {3, "gamma"});
+	myContainer.add("a", MyItem {.flag = 1, .name = "alpha"});
+	myContainer.add("b", MyItem {.flag = 2, .name = "beta"});
+	myContainer.add("c", MyItem {.flag = 3, .name = "gamma"});
 	[[maybe_unused]] auto rb = myContainer.remove("b");
 
 	nlohmann::json doc = myContainer.toJson();
@@ -611,9 +619,9 @@ TEST(RWContainer_diag, ToJSON_AfterOperations)
 TEST(RWContainer_remove, DoubleRemoveSameKey)
 {
 	siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
-	myContainer.add("key1", MyItem {1, "value"});
+	myContainer.add("key1", MyItem {.flag = 1, .name = "value"});
 
-	auto first  = myContainer.remove("key1");
+	auto first = myContainer.remove("key1");
 	ASSERT_TRUE(first);
 	EXPECT_EQ("value", first->name);
 
@@ -628,11 +636,11 @@ TEST(RWContainer_add, ReAddAfterRemove)
 {
 	siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 
-	myContainer.add("key1", MyItem {1, "original"});
+	myContainer.add("key1", MyItem {.flag = 1, .name = "original"});
 	[[maybe_unused]] auto removed = myContainer.remove("key1");
 	EXPECT_EQ(0u, myContainer.size());
 
-	auto item = myContainer.add("key1", MyItem {2, "re-added"});
+	auto item = myContainer.add("key1", MyItem {.flag = 2, .name = "re-added"});
 	ASSERT_TRUE(item);
 	EXPECT_EQ("re-added", item->name);
 	EXPECT_EQ(2, item->flag);
@@ -644,15 +652,17 @@ TEST(RWContainer_add, ReAddAfterRemove)
 TEST(RWContainer_scan, ScanFindsFirstMatch)
 {
 	siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
-	myContainer.add("a", MyItem {1, "alpha"});
-	myContainer.add("b", MyItem {2, "beta"});
-	myContainer.add("c", MyItem {3, "gamma"});
+	myContainer.add("a", MyItem {.flag = 1, .name = "alpha"});
+	myContainer.add("b", MyItem {.flag = 2, .name = "beta"});
+	myContainer.add("c", MyItem {.flag = 3, .name = "gamma"});
 
-	int scanCount = 0;
-	auto item     = myContainer.scan([&](const auto& key, auto& val) -> bool {
-        scanCount++;
-        return val->flag == 2; // find the item with flag==2
-    });
+	int  scanCount = 0;
+	auto item      = myContainer.scan(
+			[&](const auto& key, auto& val) -> bool
+			{
+				scanCount++;
+				return val->flag == 2; // find the item with flag==2
+			});
 	ASSERT_TRUE(item);
 	EXPECT_EQ("beta", item->name);
 	// scanCount depends on iteration order (unordered_map), but item must be found
@@ -664,9 +674,9 @@ TEST(RWContainer_add, IntegerKeyType)
 {
 	siddiqsoft::RWLContainer<int, MyItem> myContainer;
 
-	auto item1 = myContainer.add(1, MyItem {10, "one"});
-	auto item2 = myContainer.add(2, MyItem {20, "two"});
-	auto item3 = myContainer.add(3, MyItem {30, "three"});
+	auto item1 = myContainer.add(1, MyItem {.flag = 10, .name = "one"});
+	auto item2 = myContainer.add(2, MyItem {.flag = 20, .name = "two"});
+	auto item3 = myContainer.add(3, MyItem {.flag = 30, .name = "three"});
 
 	ASSERT_TRUE(item1);
 	ASSERT_TRUE(item2);
@@ -691,11 +701,11 @@ TEST(RWContainer_add, FailOnCollisionTakesPrecedenceOverReplace)
 	myContainer.FailOnCollission = true;
 	myContainer.ReplaceExisting  = true;
 
-	auto item1 = myContainer.add("key1", MyItem {1, "first"});
+	auto item1 = myContainer.add("key1", MyItem {.flag = 1, .name = "first"});
 	ASSERT_TRUE(item1);
 
 	// FailOnCollission is checked first in the code, so collision should fail
-	auto item2 = myContainer.add("key1", MyItem {2, "second"});
+	auto item2 = myContainer.add("key1", MyItem {.flag = 2, .name = "second"});
 	EXPECT_FALSE(item2);
 	EXPECT_EQ(1u, myContainer.size());
 
@@ -716,7 +726,7 @@ TEST(RWContainer_diag, CounterAccuracy)
 
 	for (int i = 0; i < ADD_COUNT; ++i)
 	{
-		myContainer.add(std::format("key_{}", i), MyItem {i, std::format("item_{}", i)});
+		myContainer.add(std::format("key_{}", i), MyItem {.flag = i, .name = std::format("item_{}", i)});
 	}
 
 	for (int i = 0; i < REMOVE_COUNT; ++i)
@@ -737,19 +747,20 @@ TEST(RWContainer_add, AllThreeOverloads)
 	siddiqsoft::RWLContainer<std::string, MyItem> myContainer;
 
 	// Overload 1: add(key, StorageType&&)
-	auto item1 = myContainer.add("val", MyItem {1, "by-value"});
+	auto item1 = myContainer.add("val", MyItem {.flag = 1, .name = "by-value"});
 	ASSERT_TRUE(item1);
 	EXPECT_EQ("by-value", item1->name);
 
 	// Overload 2: add(key, StorageTypePtr&&)
-	auto ptr   = std::make_shared<MyItem>(MyItem {2, "by-ptr"});
+	auto ptr   = std::make_shared<MyItem>(MyItem {.flag = 2, .name = "by-ptr"});
 	auto item2 = myContainer.add("ptr", std::move(ptr));
 	ASSERT_TRUE(item2);
 	EXPECT_EQ("by-ptr", item2->name);
 
 	// Overload 3: add(key, callback)
-	auto item3 = myContainer.add(
-			"cb", [](const std::string& key) -> MyItemPtr { return std::make_shared<MyItem>(MyItem {3, "by-callback"}); });
+	auto item3 = myContainer.add("cb",
+	                             [](const std::string& key) -> MyItemPtr
+	                             { return std::make_shared<MyItem>(MyItem {.flag = 3, .name = "by-callback"}); });
 	ASSERT_TRUE(item3);
 	EXPECT_EQ("by-callback", item3->name);
 
