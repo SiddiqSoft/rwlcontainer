@@ -43,7 +43,7 @@
         header p {
             color: #666;
             font-size: 0.95em;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
         
         .badges {
@@ -51,7 +51,7 @@
             justify-content: center;
             gap: 8px;
             flex-wrap: wrap;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
         
         .badge {
@@ -76,6 +76,71 @@
         .badge.status {
             background: #667eea;
             color: white;
+        }
+        
+        .header-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .header-feature {
+            background: #f0f0f0;
+            padding: 8px 10px;
+            border-radius: 5px;
+            text-align: center;
+            color: #333;
+            font-size: 0.75em;
+        }
+        
+        .header-feature strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 2px;
+            font-size: 0.9em;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 24px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .btn-secondary:hover {
+            background: #f8f9ff;
+            transform: translateY(-2px);
         }
         
         .content {
@@ -124,48 +189,6 @@
             left: 0;
             color: #28a745;
             font-weight: bold;
-        }
-        
-        .cta-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 15px;
-        }
-        
-        .btn {
-            display: inline-block;
-            padding: 10px 24px;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            font-size: 0.9em;
-        }
-        
-        .btn-primary {
-            background: #667eea;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-        
-        .btn-secondary {
-            background: white;
-            color: #667eea;
-            border: 2px solid #667eea;
-        }
-        
-        .btn-secondary:hover {
-            background: #f8f9ff;
-            transform: translateY(-2px);
         }
         
         .api-section {
@@ -278,42 +301,6 @@
             color: #333;
         }
         
-        .features-mini {
-            background: white;
-            border-radius: 8px;
-            padding: 15px 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-        }
-        
-        .features-mini h2 {
-            color: #667eea;
-            margin-bottom: 10px;
-            font-size: 1.1em;
-        }
-        
-        .features-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 10px;
-        }
-        
-        .feature-badge {
-            background: #f0f0f0;
-            padding: 10px 12px;
-            border-radius: 5px;
-            text-align: center;
-            color: #333;
-            font-size: 0.8em;
-        }
-        
-        .feature-badge strong {
-            color: #667eea;
-            display: block;
-            margin-bottom: 3px;
-            font-size: 0.9em;
-        }
-        
         footer {
             background: white;
             border-radius: 8px;
@@ -354,8 +341,8 @@
                 text-align: center;
             }
             
-            .features-list {
-                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            .header-features {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
             }
         }
     </style>
@@ -370,6 +357,33 @@
                 <span class="badge cpp">C++20</span>
                 <span class="badge license">BSD 3-Clause</span>
                 <span class="badge status">Production Ready</span>
+            </div>
+            
+            <div class="header-features">
+                <div class="header-feature">
+                    <strong>🔐 Thread-Safe</strong>
+                    Synchronization
+                </div>
+                <div class="header-feature">
+                    <strong>⚡ High Performance</strong>
+                    Reader-writer locking
+                </div>
+                <div class="header-feature">
+                    <strong>🎯 Type-Safe</strong>
+                    C++20 templates
+                </div>
+                <div class="header-feature">
+                    <strong>✅ Production-Ready</strong>
+                    Full test coverage
+                </div>
+                <div class="header-feature">
+                    <strong>📦 Zero-Copy</strong>
+                    Move semantics
+                </div>
+                <div class="header-feature">
+                    <strong>📄 JSON Support</strong>
+                    Serialization
+                </div>
             </div>
             
             <div class="cta-buttons">
@@ -400,36 +414,6 @@
                     <li>Atomic counters</li>
                     <li>JSON serialization support</li>
                 </ul>
-            </div>
-        </div>
-        
-        <div class="features-mini">
-            <h2>Key Features</h2>
-            <div class="features-list">
-                <div class="feature-badge">
-                    <strong>🔐 Thread-Safe</strong>
-                    Synchronization primitives
-                </div>
-                <div class="feature-badge">
-                    <strong>⚡ High Performance</strong>
-                    Reader-writer locking
-                </div>
-                <div class="feature-badge">
-                    <strong>🎯 Type-Safe</strong>
-                    C++20 templates
-                </div>
-                <div class="feature-badge">
-                    <strong>✅ Production-Ready</strong>
-                    Full test coverage
-                </div>
-                <div class="feature-badge">
-                    <strong>📦 Zero-Copy</strong>
-                    Move semantics
-                </div>
-                <div class="feature-badge">
-                    <strong>📄 JSON Support</strong>
-                    Serialization
-                </div>
             </div>
         </div>
         
