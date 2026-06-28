@@ -43,12 +43,11 @@ target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
 # ____________________________________
 # Natvis files for debugger visualization
 # These files enable enhanced debugging experience in Visual Studio and VS Code
-set(NATVIS_FILES
-    "${CMAKE_CURRENT_SOURCE_DIR}/pack/SiddiqSoft.RWLContainer.natvis"
-)
-
-# Add natvis files to the library for IDE integration
-target_sources(${PROJECT_NAME} INTERFACE FILE_SET natvis TYPE NATVIS FILES ${NATVIS_FILES})
+# Install natvis file for Visual Studio debugger visualization
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/pack/SiddiqSoft.RWLContainer.natvis
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}
+        COMPONENT natvis
+        OPTIONAL)
 
 # ____________________________________
 # Dependencies
