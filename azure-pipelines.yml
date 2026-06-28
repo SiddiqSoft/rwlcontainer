@@ -213,7 +213,3 @@ stages:
           displayName: GitHub Release
           PublishGitHub: ${{ variables.PublishGitHub }}
 
-      - template: .azure/az-publish-wiki.yml
-        parameters:
-          displayName: Wiki Publication
-          PublishWiki: ${{ variables.PublishWiki }}
