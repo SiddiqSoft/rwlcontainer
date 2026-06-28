@@ -31,44 +31,84 @@ Tested and built on:
 
 All platforms are tested in the CI/CD pipeline with comprehensive test coverage.
 
-## Testing
+---
 
-- **107 comprehensive test cases** using Google Test (gtest)
-- **Full FIFO ordering verification** for WaitableQueue (24 dedicated tests)
-- **100% method coverage** for both RWLContainer and WaitableQueue
-- Code coverage reporting (Linux builds)
-- Automated testing on all supported platforms via Azure Pipelines
-- Stress testing with up to 5000+ items and multiple concurrent threads
-- Edge case and concurrent access pattern testing
+# Classes and Methods
 
-### Test Files
+## RWLContainer
 
-- `tests/test.cpp` - RWLContainer core tests (34 tests)
-- `tests/queuetest.cpp` - WaitableQueue core tests (20 tests)
-- `tests/coverage_test.cpp` - Comprehensive coverage tests (29 tests)
-- `tests/fifo_test.cpp` - FIFO ordering verification tests (24 tests)
+A thread-safe dictionary with reader-writer locking for efficient concurrent access.
 
-For detailed test documentation, see [TEST_DOCUMENTATION.md](TEST_DOCUMENTATION.md).
+```
+RWLContainer<KeyType, StorageType>
+├── Configuration
+│   ├── ReplaceExisting
+│   └── FailOnCollission
+├── Methods
+│   ├── add(key, value)
+│   ├── add(key, shared_ptr)
+│   ├── add(key, callback)
+│   ├── remove(key)
+│   ├── find(key)
+│   ├── size()
+│   ├── scan(callback)
+│   └── toJson()
+└── Properties
+    ├── addCounter
+    └── removeCounter
+```
 
-### Known Test Behavior
+### RWLContainer Methods
 
-**ConcurrentScanAndWrite Test**: This stress test exercises concurrent scanning and writing operations on the RWLContainer. Due to platform-specific differences in `std::shared_mutex` implementations:
+| Method | Description | Link |
+|--------|-------------|------|
+| `add(key, StorageType&&)` | Add element by moving value | [Details](API.md#addconst-keytype-key-storagetype-value---storagetypeptr) |
+| `add(key, StorageTypePtr&&)` | Add element via shared_ptr | [Details](API.md#addconst-keytype-key-storagetypeptr-value---storagetypeptr) |
+| `add(key, callback)` | Add element via callback | [Details](API.md#addconst-keytype-key-functionstoragetypptrconst-keytype-callback---storagetypeptr) |
+| `remove(key)` | Remove and return element | [Details](API.md#removeconst-keytype-key---storagetypeptr) |
+| `find(key)` | Find element without removing | [Details](API.md#findconst-keytype-key---storagetypeptr) |
+| `size()` | Get number of elements | [Details](API.md#size-const---size_t) |
+| `scan(callback)` | Iterate and find elements | [Details](API.md#scancallback---storagetypeptr) |
+| `toJson()` | Serialize to JSON | [Details](API.md#tojson---nlohmannjson-optional) |
 
-- **Linux (x86_64 and ARM64)**: The test includes a timeout mechanism (100ms) to prevent potential deadlocks. The scan callback will exit early if it exceeds the timeout, allowing the test to complete successfully.
-- **Windows (ARM64)** and **macOS**: The test runs without timeout restrictions and completes normally without deadlock issues.
+---
 
-This difference is due to variations in how different platforms implement reader-writer lock fairness and priority inversion handling. The timeout mechanism ensures the test remains robust across all platforms while still validating the thread-safety of concurrent operations.
+## WaitableQueue
 
-**WaitUntilEmptyTightLoopContention Test**: This stress test for WaitableQueue exercises tight-loop contention between multiple threads calling `waitUntilEmpty()` while concurrent push/pop operations occur. Due to platform-specific differences in `std::shared_mutex` implementations:
+A thread-safe queue with timeout-based waiting for producer-consumer patterns.
 
-- **Linux (x86_64 and ARM64)**: The test is skipped or may experience deadlocks due to lock fairness issues under extreme contention. The tight loop with minimal timeouts (1ms) can cause priority inversion on Linux's shared_mutex implementation.
-- **Windows (ARM64)** and **macOS**: The test runs without issues and completes normally, demonstrating robust handling of concurrent wait and mutation operations.
+```
+WaitableQueue<StorageType>
+├── Methods
+│   ├── push(value)
+│   ├── emplace(value)
+│   ├── tryWaitItem(timeout)
+│   ├── waitUntilEmpty(timeout)
+│   ├── size()
+│   ├── addCounter()
+│   ├── removeCounter()
+│   └── toJson()
+└── Properties
+    ├── Deleted: copy constructor
+    ├── Deleted: move constructor
+    ├── Deleted: copy assignment
+    └── Deleted: move assignment
+```
 
-This difference reflects variations in how different platforms prioritize reader vs. writer threads in shared_mutex implementations. The library's core functionality remains thread-safe on all platforms; this test specifically stresses an edge case that manifests differently across platforms.
+### WaitableQueue Methods
 
-## Versioning
+| Method | Description | Link |
+|--------|-------------|------|
+| `push(StorageType&&)` | Add element to queue | [Details](API.md#pushstoragetype-value---void) |
+| `emplace(StorageType&&)` | Construct element in-place | [Details](API.md#emplacestoragetype-value---void) |
+| `tryWaitItem(timeout)` | Wait for element with timeout | [Details](API.md#trywaititemstoragetype-timeout---stdoptionalstoragetype) |
+| `waitUntilEmpty(timeout)` | Wait until queue is empty | [Details](API.md#waituntilemptytimeout---stdoptionalsize_t) |
+| `size()` | Get number of elements | [Details](API.md#size---size_t) |
+| `addCounter()` | Get total adds | [Details](API.md#addcounter---uint64_t) |
+| `removeCounter()` | Get total removes | [Details](API.md#removecounter---uint64_t) |
+| `toJson()` | Serialize to JSON | [Details](API.md#tojson---nlohmannjson-optional-1) |
 
-Uses [GitVersion](https://gitversion.net/) for semantic versioning (`MAJOR.MINOR.PATCH`). Version is automatically determined from git history.
+---
 
 # API Documentation
 
@@ -79,29 +119,85 @@ For detailed API documentation, method signatures, and comprehensive examples, s
 - Use the nuget [SiddiqSoft.RWLContainer](https://www.nuget.org/packages/SiddiqSoft.RWLContainer/)
 - Use CPM to integrate into your CMake project
 
-## Quick Example
+## Quick Example: RWLContainer
 
 ```cpp
-#include "gtest/gtest.h"
-#include "nlohmann/json.hpp"
 #include "siddiqsoft/RWLContainer.hpp"
 
-TEST(examples, Example1)
-{
-    try
-    {
-        siddiqsoft::RWLContainer<std::string, std::string> myContainer;
-
-        auto item = myContainer.add("foo", "bar");
-        ASSERT_TRUE(item);
-        EXPECT_EQ("bar", *item);
+int main() {
+    siddiqsoft::RWLContainer<std::string, int> cache;
+    
+    // Add items
+    cache.add("count", 42);
+    cache.add("value", 100);
+    
+    // Find items
+    if (auto val = cache.find("count")) {
+        std::cout << "Found: " << *val << std::endl;
     }
-    catch (...)
-    {
-        EXPECT_TRUE(false); // if we throw then the test fails.
-    }
+    
+    // Remove items
+    cache.remove("count");
+    
+    std::cout << "Size: " << cache.size() << std::endl;
+    
+    return 0;
 }
 ```
+
+## Quick Example: WaitableQueue
+
+```cpp
+#include "siddiqsoft/WaitableQueue.hpp"
+#include <thread>
+
+int main() {
+    siddiqsoft::WaitableQueue<std::string> queue;
+    
+    // Producer thread
+    std::thread producer([&queue]() {
+        for (int i = 0; i < 5; ++i) {
+            queue.push(std::string("item_") + std::to_string(i));
+        }
+    });
+    
+    // Consumer thread
+    std::thread consumer([&queue]() {
+        while (true) {
+            auto item = queue.tryWaitItem(std::chrono::milliseconds(500));
+            if (item) {
+                std::cout << "Processed: " << *item << std::endl;
+            } else {
+                break;
+            }
+        }
+    });
+    
+    producer.join();
+    consumer.join();
+    
+    return 0;
+}
+```
+
+---
+
+# Versioning
+
+Uses [GitVersion](https://gitversion.net/) for semantic versioning (`MAJOR.MINOR.PATCH`). Version is automatically determined from git history.
+
+---
+
+# Documentation
+
+- [API.md](API.md) - Complete API reference with examples
+- [TEST_DOCUMENTATION.md](TEST_DOCUMENTATION.md) - Comprehensive test documentation
+- [TEST_COVERAGE.md](TEST_COVERAGE.md) - Coverage summary
+- [COVERAGE_REPORT.md](COVERAGE_REPORT.md) - Coverage metrics
+- [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md) - Implementation guide
+- [DOCUMENTATION_UPDATE.md](DOCUMENTATION_UPDATE.md) - Documentation updates
+
+---
 
 <small align="right">
 

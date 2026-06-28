@@ -36,10 +36,13 @@
 
 #include "gtest/gtest.h"
 #include <format>
+#include <ostream>
 #include <thread>
 #include <chrono>
 #include <vector>
 #include <deque>
+
+#include "nlohmann/json.hpp"
 #include "../include/siddiqsoft/WaitableQueue.hpp"
 
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
@@ -77,7 +80,7 @@ TEST(WaitableQueue_FIFO, BasicFIFOSmallDataset)
 TEST(WaitableQueue_FIFO, FIFOLargeDataset)
 {
 	siddiqsoft::WaitableQueue<int> queue;
-	const int ITEM_COUNT = 1000;
+	const int                      ITEM_COUNT = 1000;
 
 	// Push 1000 items
 	for (int i = 0; i < ITEM_COUNT; ++i)
@@ -272,19 +275,18 @@ TEST(WaitableQueue_FIFO, FIFOMultipleProducersSequential)
 TEST(WaitableQueue_FIFO, FIFOConcurrentProducerConsumer)
 {
 	siddiqsoft::WaitableQueue<int> queue;
-	std::vector<int> consumed;
-	const int ITEM_COUNT = 100;
+	std::vector<int>               consumed;
+	const int                      ITEM_COUNT = 100;
 
-	std::jthread consumer([&](std::stop_token st) {
-		while (!st.stop_requested())
-		{
-			auto item = queue.tryWaitItem(std::chrono::milliseconds(10));
-			if (item.has_value())
+	std::jthread consumer(
+			[&](std::stop_token st)
 			{
-				consumed.push_back(item.value());
-			}
-		}
-	});
+				while (!st.stop_requested())
+				{
+					auto item = queue.tryWaitItem(std::chrono::milliseconds(10));
+					if (item.has_value()) { consumed.push_back(item.value()); }
+				}
+			});
 
 	// Producer thread
 	for (int i = 0; i < ITEM_COUNT; ++i)
@@ -312,34 +314,38 @@ TEST(WaitableQueue_FIFO, FIFOConcurrentProducerConsumer)
 TEST(WaitableQueue_FIFO, FIFOMultipleProducersSingleConsumer)
 {
 	siddiqsoft::WaitableQueue<int> queue;
-	std::vector<int> consumed;
-	std::mutex consumed_mutex;
-	const int ITEMS_PER_PRODUCER = 30;
-	const int PRODUCER_COUNT = 3;
+	std::vector<int>               consumed;
+	std::mutex                     consumed_mutex;
+	const int                      ITEMS_PER_PRODUCER = 30;
+	const int                      PRODUCER_COUNT     = 3;
 
 	std::vector<std::jthread> producers;
 	for (int p = 0; p < PRODUCER_COUNT; ++p)
 	{
-		producers.emplace_back([&, p](std::stop_token st) {
-			for (int i = 0; i < ITEMS_PER_PRODUCER && !st.stop_requested(); ++i)
-			{
-				int val = p * 1000 + i;
-				queue.push(std::move(val));
-			}
-		});
+		producers.emplace_back(
+				[&, p](std::stop_token st)
+				{
+					for (int i = 0; i < ITEMS_PER_PRODUCER && !st.stop_requested(); ++i)
+					{
+						int val = p * 1000 + i;
+						queue.push(std::move(val));
+					}
+				});
 	}
 
-	std::jthread consumer([&](std::stop_token st) {
-		while (!st.stop_requested())
-		{
-			auto item = queue.tryWaitItem(std::chrono::milliseconds(10));
-			if (item.has_value())
+	std::jthread consumer(
+			[&](std::stop_token st)
 			{
-				std::lock_guard<std::mutex> lock(consumed_mutex);
-				consumed.push_back(item.value());
-			}
-		}
-	});
+				while (!st.stop_requested())
+				{
+					auto item = queue.tryWaitItem(std::chrono::milliseconds(10));
+					if (item.has_value())
+					{
+						std::scoped_lock<std::mutex> lock(consumed_mutex);
+						consumed.push_back(item.value());
+					}
+				}
+			});
 
 	for (auto& p : producers)
 	{
@@ -358,9 +364,8 @@ TEST(WaitableQueue_FIFO, FIFOMultipleProducersSingleConsumer)
 	for (int val : consumed)
 	{
 		int producer_id = val / 1000;
-		int item_index = val % 1000;
-		EXPECT_EQ(producer_indices[producer_id], item_index)
-			<< "Producer " << producer_id << " items out of order";
+		int item_index  = val % 1000;
+		EXPECT_EQ(producer_indices[producer_id], item_index) << "Producer " << producer_id << " items out of order";
 		producer_indices[producer_id]++;
 	}
 }
@@ -370,33 +375,37 @@ TEST(WaitableQueue_FIFO, FIFOMultipleProducersSingleConsumer)
 TEST(WaitableQueue_FIFO, FIFOSingleProducerMultipleConsumers)
 {
 	siddiqsoft::WaitableQueue<int> queue;
-	std::vector<int> consumed;
-	std::mutex consumed_mutex;
-	const int ITEM_COUNT = 100;
-	const int CONSUMER_COUNT = 3;
+	std::vector<int>               consumed;
+	std::mutex                     consumed_mutex;
+	const int                      ITEM_COUNT     = 100;
+	const int                      CONSUMER_COUNT = 3;
 
-	std::jthread producer([&](std::stop_token st) {
-		for (int i = 0; i < ITEM_COUNT && !st.stop_requested(); ++i)
-		{
-			int val = i;
-			queue.push(std::move(val));
-		}
-	});
+	std::jthread producer(
+			[&](std::stop_token st)
+			{
+				for (int i = 0; i < ITEM_COUNT && !st.stop_requested(); ++i)
+				{
+					int val = i;
+					queue.push(std::move(val));
+				}
+			});
 
 	std::vector<std::jthread> consumers;
 	for (int c = 0; c < CONSUMER_COUNT; ++c)
 	{
-		consumers.emplace_back([&](std::stop_token st) {
-			while (!st.stop_requested())
-			{
-				auto item = queue.tryWaitItem(std::chrono::milliseconds(10));
-				if (item.has_value())
+		consumers.emplace_back(
+				[&](std::stop_token st)
 				{
-					std::lock_guard<std::mutex> lock(consumed_mutex);
-					consumed.push_back(item.value());
-				}
-			}
-		});
+					while (!st.stop_requested())
+					{
+						auto item = queue.tryWaitItem(std::chrono::milliseconds(10));
+						if (item.has_value())
+						{
+							std::scoped_lock<std::mutex> lock(consumed_mutex);
+							consumed.push_back(item.value());
+						}
+					}
+				});
 	}
 
 	producer.join();
@@ -423,9 +432,9 @@ TEST(WaitableQueue_FIFO, FIFOSingleProducerMultipleConsumers)
 
 struct FIFOTestItem
 {
-	int id;
+	int         id;
 	std::string name;
-	int sequence;
+	int         sequence;
 
 	FIFOTestItem(int i, const std::string& n, int s)
 		: id(i)
@@ -549,29 +558,33 @@ TEST(WaitableQueue_FIFO, FIFOWithDequeContainer)
 TEST(WaitableQueue_FIFO, FIFOStressHighThroughput)
 {
 	siddiqsoft::WaitableQueue<int> queue;
-	std::vector<int> consumed;
-	std::mutex consumed_mutex;
-	const int ITEM_COUNT = 5000;
+	std::vector<int>               consumed;
+	std::mutex                     consumed_mutex;
+	const int                      ITEM_COUNT = 5000;
 
-	std::jthread producer([&](std::stop_token st) {
-		for (int i = 0; i < ITEM_COUNT && !st.stop_requested(); ++i)
-		{
-			int val = i;
-			queue.push(std::move(val));
-		}
-	});
-
-	std::jthread consumer([&](std::stop_token st) {
-		while (!st.stop_requested())
-		{
-			auto item = queue.tryWaitItem(std::chrono::milliseconds(5));
-			if (item.has_value())
+	std::jthread producer(
+			[&](std::stop_token st)
 			{
-				std::lock_guard<std::mutex> lock(consumed_mutex);
-				consumed.push_back(item.value());
-			}
-		}
-	});
+				for (int i = 0; i < ITEM_COUNT && !st.stop_requested(); ++i)
+				{
+					int val = i;
+					queue.push(std::move(val));
+				}
+			});
+
+	std::jthread consumer(
+			[&](std::stop_token st)
+			{
+				while (!st.stop_requested())
+				{
+					auto item = queue.tryWaitItem(std::chrono::milliseconds(5));
+					if (item.has_value())
+					{
+						std::scoped_lock<std::mutex> lock(consumed_mutex);
+						consumed.push_back(item.value());
+					}
+				}
+			});
 
 	producer.join();
 	queue.waitUntilEmpty(std::chrono::milliseconds(5000));
@@ -600,6 +613,8 @@ TEST(WaitableQueue_FIFO, FIFOTimeoutPartialConsumption)
 		int val = i;
 		queue.push(std::move(val));
 	}
+	std::cerr << std::format( "0 - Items in the queue:\n{}\n", queue.toJson().dump(2));
+	EXPECT_EQ(5, queue.size());
 
 	// Consume 3 items
 	for (int i = 0; i < 3; ++i)
@@ -608,10 +623,17 @@ TEST(WaitableQueue_FIFO, FIFOTimeoutPartialConsumption)
 		ASSERT_TRUE(item.has_value());
 		EXPECT_EQ(i, item.value());
 	}
+	std::cerr << std::format( "1 - Items in the queue:\n{}\n", queue.toJson().dump(2));
+	// We should have two items remaining..
+	EXPECT_EQ(2, queue.size());
 
 	// Wait for timeout on empty (should timeout)
 	auto timeout_item = queue.tryWaitItem(std::chrono::milliseconds(50));
-	EXPECT_FALSE(timeout_item.has_value());
+	//std::cerr << "Got Item " << timeout_item.has_value() << std::endl;
+	std::cerr << std::format( "2 - Items in the queue:\n{}\n", queue.toJson().dump(2));
+	EXPECT_TRUE(timeout_item.has_value());
+	// We should have two items remaining..
+	EXPECT_EQ(1, queue.size());
 
 	// Push 2 more items
 	for (int i = 5; i < 7; ++i)
@@ -619,15 +641,19 @@ TEST(WaitableQueue_FIFO, FIFOTimeoutPartialConsumption)
 		int val = i;
 		queue.push(std::move(val));
 	}
+	std::cerr << std::format( "3 - Items in the queue:\n{}\n", queue.toJson().dump(2));
+	EXPECT_EQ(3, queue.size());
 
 	// Consume remaining in FIFO order
-	for (int i = 3; i < 7; ++i)
+	for (int i = 4; i < 7; ++i)
 	{
 		auto item = queue.tryWaitItem(std::chrono::milliseconds(100));
 		ASSERT_TRUE(item.has_value());
+		std::cerr << std::format("3 - Item:{}  vs {}\n", item.value(), i);
 		EXPECT_EQ(i, item.value());
 	}
 
+	std::cerr << std::format( "4 - Items in the queue:\n{}\n", queue.toJson().dump(2));
 	EXPECT_EQ(0u, queue.size());
 }
 
@@ -638,7 +664,7 @@ TEST(WaitableQueue_FIFO, FIFOAlternatingPattern)
 	siddiqsoft::WaitableQueue<int> queue;
 
 	// Pattern: push 2, pop 1, push 2, pop 1, etc.
-	int push_val = 0;
+	int push_val     = 0;
 	int expected_pop = 0;
 
 	for (int iteration = 0; iteration < 10; ++iteration)

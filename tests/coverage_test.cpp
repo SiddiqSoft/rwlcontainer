@@ -101,22 +101,24 @@ TEST(RWLContainer_Coverage, ConcurrentReads)
 		container.add(std::format("key_{}", i), TestItem {i, std::format("value_{}", i)});
 	}
 
-	std::atomic_int readCount {0};
+	std::atomic_int           readCount {0};
 	std::vector<std::jthread> threads;
 
 	// Spawn multiple reader threads
 	for (int t = 0; t < 5; ++t)
 	{
-		threads.emplace_back([&](std::stop_token st) {
-			while (!st.stop_requested())
-			{
-				for (int i = 0; i < 10; ++i)
+		threads.emplace_back(
+				[&](std::stop_token st)
 				{
-					auto item = container.find(std::format("key_{}", i));
-					if (item) readCount++;
-				}
-			}
-		});
+					while (!st.stop_requested())
+					{
+						for (int i = 0; i < 10; ++i)
+						{
+							auto item = container.find(std::format("key_{}", i));
+							if (item) readCount++;
+						}
+					}
+				});
 	}
 
 	// Let them run for a bit
@@ -139,27 +141,31 @@ TEST(RWLContainer_Coverage, ConcurrentWritesAndReads)
 	std::atomic_int writeCount {0};
 	std::atomic_int readCount {0};
 
-	std::jthread writer([&](std::stop_token st) {
-		int counter = 0;
-		while (!st.stop_requested())
-		{
-			container.add(std::format("key_{}", counter), TestItem {counter, "data"});
-			writeCount++;
-			counter++;
-			if (counter > 100) counter = 0;
-		}
-	});
-
-	std::jthread reader([&](std::stop_token st) {
-		while (!st.stop_requested())
-		{
-			for (int i = 0; i < 50; ++i)
+	std::jthread writer(
+			[&](std::stop_token st)
 			{
-				auto item = container.find(std::format("key_{}", i));
-				if (item) readCount++;
-			}
-		}
-	});
+				int counter = 0;
+				while (!st.stop_requested())
+				{
+					container.add(std::format("key_{}", counter), TestItem {counter, "data"});
+					writeCount++;
+					counter++;
+					if (counter > 100) counter = 0;
+				}
+			});
+
+	std::jthread reader(
+			[&](std::stop_token st)
+			{
+				while (!st.stop_requested())
+				{
+					for (int i = 0; i < 50; ++i)
+					{
+						auto item = container.find(std::format("key_{}", i));
+						if (item) readCount++;
+					}
+				}
+			});
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	writer.request_stop();
@@ -180,11 +186,13 @@ TEST(RWLContainer_Coverage, ScanEarlyTermination)
 		container.add(std::format("key_{}", i), TestItem {i, std::format("value_{}", i)});
 	}
 
-	int scanCount = 0;
-	auto result   = container.scan([&](const auto& key, auto& val) -> bool {
-		scanCount++;
-		return scanCount == 5; // Stop after 5 iterations
-	});
+	int  scanCount = 0;
+	auto result    = container.scan(
+			[&](const auto& key, auto& val) -> bool
+			{
+				scanCount++;
+				return scanCount == 5; // Stop after 5 iterations
+			});
 
 	ASSERT_TRUE(result);
 	EXPECT_EQ(5, scanCount);
@@ -201,11 +209,13 @@ TEST(RWLContainer_Coverage, ScanNoMatch)
 		container.add(std::format("key_{}", i), TestItem {i, "data"});
 	}
 
-	int scanCount = 0;
-	auto result   = container.scan([&](const auto& key, auto& val) -> bool {
-		scanCount++;
-		return false; // Never match
-	});
+	int  scanCount = 0;
+	auto result    = container.scan(
+			[&](const auto& key, auto& val) -> bool
+			{
+				scanCount++;
+				return false; // Never match
+			});
 
 	EXPECT_FALSE(result);
 	EXPECT_EQ(50, scanCount);
@@ -217,9 +227,9 @@ TEST(RWLContainer_Coverage, AddCallbackReturnsValidPtr)
 {
 	siddiqsoft::RWLContainer<std::string, TestItem> container;
 
-	auto item = container.add("key1", [](const std::string& key) -> std::shared_ptr<TestItem> {
-		return std::make_shared<TestItem>(TestItem {42, key});
-	});
+	auto item = container.add("key1",
+	                          [](const std::string& key) -> std::shared_ptr<TestItem>
+	                          { return std::make_shared<TestItem>(TestItem {42, key}); });
 
 	ASSERT_TRUE(item);
 	EXPECT_EQ(42, item->id);
@@ -240,8 +250,8 @@ TEST(RWLContainer_Coverage, RemoveCounterIncrement)
 	EXPECT_EQ(3u, json1["adds"].get<uint64_t>());
 	EXPECT_EQ(0u, json1["removes"].get<uint64_t>());
 
-	container.remove("a");
-	container.remove("b");
+	auto dummy1 = container.remove("a");
+	auto dummy2 = container.remove("b");
 
 	auto json2 = container.toJson();
 	EXPECT_EQ(3u, json2["adds"].get<uint64_t>());
@@ -266,7 +276,7 @@ TEST(RWLContainer_Coverage, ToJsonEmptyContainer)
 TEST(RWLContainer_Coverage, ToJsonWithFlags)
 {
 	siddiqsoft::RWLContainer<std::string, TestItem> container;
-	container.ReplaceExisting = true;
+	container.ReplaceExisting  = true;
 	container.FailOnCollission = true;
 
 	auto json = container.toJson();
@@ -281,20 +291,20 @@ TEST(RWLContainer_Coverage, AddSharedPtrMultipleScenarios)
 	siddiqsoft::RWLContainer<std::string, TestItem> container;
 
 	// Scenario 1: Add new item via shared_ptr
-	auto ptr1 = std::make_shared<TestItem>(TestItem {1, "first"});
+	auto ptr1  = std::make_shared<TestItem>(TestItem {1, "first"});
 	auto item1 = container.add("key1", std::move(ptr1));
 	ASSERT_TRUE(item1);
 	EXPECT_EQ("first", item1->value);
 
 	// Scenario 2: Collision with default behavior (return existing)
-	auto ptr2 = std::make_shared<TestItem>(TestItem {2, "second"});
+	auto ptr2  = std::make_shared<TestItem>(TestItem {2, "second"});
 	auto item2 = container.add("key1", std::move(ptr2));
 	ASSERT_TRUE(item2);
 	EXPECT_EQ("first", item2->value); // Should be original
 	EXPECT_EQ(item1, item2);
 
 	// Scenario 3: New key
-	auto ptr3 = std::make_shared<TestItem>(TestItem {3, "third"});
+	auto ptr3  = std::make_shared<TestItem>(TestItem {3, "third"});
 	auto item3 = container.add("key2", std::move(ptr3));
 	ASSERT_TRUE(item3);
 	EXPECT_EQ("third", item3->value);
@@ -308,15 +318,11 @@ TEST(RWLContainer_Coverage, AddCallbackWithReplace)
 	siddiqsoft::RWLContainer<std::string, TestItem> container;
 	container.ReplaceExisting = true;
 
-	auto item1 = container.add("key1", [](const auto& key) {
-		return std::make_shared<TestItem>(TestItem {1, "first"});
-	});
+	auto item1 = container.add("key1", [](const auto& key) { return std::make_shared<TestItem>(TestItem {1, "first"}); });
 	ASSERT_TRUE(item1);
 	EXPECT_EQ("first", item1->value);
 
-	auto item2 = container.add("key1", [](const auto& key) {
-		return std::make_shared<TestItem>(TestItem {2, "replaced"});
-	});
+	auto item2 = container.add("key1", [](const auto& key) { return std::make_shared<TestItem>(TestItem {2, "replaced"}); });
 	ASSERT_TRUE(item2);
 	EXPECT_EQ("replaced", item2->value);
 	EXPECT_EQ(1u, container.size());
@@ -518,7 +524,7 @@ TEST(WaitableQueue_Coverage, PushEmplaceVariousTypes)
 	// Integer queue
 	{
 		siddiqsoft::WaitableQueue<int> queue;
-		int val1 = 42;
+		int                            val1 = 42;
 		queue.push(std::move(val1));
 		int val2 = 99;
 		queue.emplace(std::move(val2));
@@ -529,7 +535,7 @@ TEST(WaitableQueue_Coverage, PushEmplaceVariousTypes)
 	// Vector queue
 	{
 		siddiqsoft::WaitableQueue<std::vector<int>> queue;
-		std::vector<int> v1 {1, 2, 3};
+		std::vector<int>                            v1 {1, 2, 3};
 		queue.push(std::move(v1));
 		std::vector<int> v2 {4, 5, 6};
 		queue.emplace(std::move(v2));
@@ -567,26 +573,30 @@ TEST(WaitableQueue_Coverage, SizeConsistency)
 TEST(WaitableQueue_Coverage, ConcurrentPushPop)
 {
 	siddiqsoft::WaitableQueue<int> queue;
-	std::atomic_int pushCount {0};
-	std::atomic_int popCount {0};
-	const int ITEM_COUNT = 100;
+	std::atomic_int                pushCount {0};
+	std::atomic_int                popCount {0};
+	const int                      ITEM_COUNT = 100;
 
-	std::jthread producer([&](std::stop_token st) {
-		for (int i = 0; i < ITEM_COUNT && !st.stop_requested(); ++i)
-		{
-			int val = i;
-			queue.push(std::move(val));
-			pushCount++;
-		}
-	});
+	std::jthread producer(
+			[&](std::stop_token st)
+			{
+				for (int i = 0; i < ITEM_COUNT && !st.stop_requested(); ++i)
+				{
+					int val = i;
+					queue.push(std::move(val));
+					pushCount++;
+				}
+			});
 
-	std::jthread consumer([&](std::stop_token st) {
-		while (!st.stop_requested())
-		{
-			auto item = queue.tryWaitItem(std::chrono::milliseconds(10));
-			if (item.has_value()) popCount++;
-		}
-	});
+	std::jthread consumer(
+			[&](std::stop_token st)
+			{
+				while (!st.stop_requested())
+				{
+					auto item = queue.tryWaitItem(std::chrono::milliseconds(10));
+					if (item.has_value()) popCount++;
+				}
+			});
 
 	producer.join();
 	queue.waitUntilEmpty(std::chrono::milliseconds(2000));
@@ -604,29 +614,33 @@ TEST(WaitableQueue_Coverage, ConcurrentPushPop)
 TEST(WaitableQueue_Coverage, MultipleProducersSingleConsumer)
 {
 	siddiqsoft::WaitableQueue<int> queue;
-	std::atomic_int totalConsumed {0};
-	const int ITEMS_PER_PRODUCER = 50;
-	const int PRODUCER_COUNT = 3;
+	std::atomic_int                totalConsumed {0};
+	const int                      ITEMS_PER_PRODUCER = 50;
+	const int                      PRODUCER_COUNT     = 3;
 
 	std::vector<std::jthread> producers;
 	for (int p = 0; p < PRODUCER_COUNT; ++p)
 	{
-		producers.emplace_back([&, p](std::stop_token st) {
-			for (int i = 0; i < ITEMS_PER_PRODUCER && !st.stop_requested(); ++i)
-			{
-				int val = p * 1000 + i;
-				queue.push(std::move(val));
-			}
-		});
+		producers.emplace_back(
+				[&, p](std::stop_token st)
+				{
+					for (int i = 0; i < ITEMS_PER_PRODUCER && !st.stop_requested(); ++i)
+					{
+						int val = p * 1000 + i;
+						queue.push(std::move(val));
+					}
+				});
 	}
 
-	std::jthread consumer([&](std::stop_token st) {
-		while (!st.stop_requested())
-		{
-			auto item = queue.tryWaitItem(std::chrono::milliseconds(10));
-			if (item.has_value()) totalConsumed++;
-		}
-	});
+	std::jthread consumer(
+			[&](std::stop_token st)
+			{
+				while (!st.stop_requested())
+				{
+					auto item = queue.tryWaitItem(std::chrono::milliseconds(10));
+					if (item.has_value()) totalConsumed++;
+				}
+			});
 
 	for (auto& p : producers)
 	{
@@ -646,28 +660,32 @@ TEST(WaitableQueue_Coverage, MultipleProducersSingleConsumer)
 TEST(WaitableQueue_Coverage, SingleProducerMultipleConsumers)
 {
 	siddiqsoft::WaitableQueue<int> queue;
-	std::atomic_int totalConsumed {0};
-	const int ITEM_COUNT = 100;
-	const int CONSUMER_COUNT = 3;
+	std::atomic_int                totalConsumed {0};
+	const int                      ITEM_COUNT     = 100;
+	const int                      CONSUMER_COUNT = 3;
 
-	std::jthread producer([&](std::stop_token st) {
-		for (int i = 0; i < ITEM_COUNT && !st.stop_requested(); ++i)
-		{
-			int val = i;
-			queue.push(std::move(val));
-		}
-	});
+	std::jthread producer(
+			[&](std::stop_token st)
+			{
+				for (int i = 0; i < ITEM_COUNT && !st.stop_requested(); ++i)
+				{
+					int val = i;
+					queue.push(std::move(val));
+				}
+			});
 
 	std::vector<std::jthread> consumers;
 	for (int c = 0; c < CONSUMER_COUNT; ++c)
 	{
-		consumers.emplace_back([&](std::stop_token st) {
-			while (!st.stop_requested())
-			{
-				auto item = queue.tryWaitItem(std::chrono::milliseconds(10));
-				if (item.has_value()) totalConsumed++;
-			}
-		});
+		consumers.emplace_back(
+				[&](std::stop_token st)
+				{
+					while (!st.stop_requested())
+					{
+						auto item = queue.tryWaitItem(std::chrono::milliseconds(10));
+						if (item.has_value()) totalConsumed++;
+					}
+				});
 	}
 
 	producer.join();
@@ -720,7 +738,7 @@ TEST(WaitableQueue_Coverage, RapidPushPopCycles)
 TEST(WaitableQueue_Coverage, WaitUntilEmptyWithActiveDrain)
 {
 	siddiqsoft::WaitableQueue<int> queue;
-	const int ITEM_COUNT = 200;
+	const int                      ITEM_COUNT = 200;
 
 	// Push all items
 	for (int i = 0; i < ITEM_COUNT; ++i)
@@ -732,13 +750,15 @@ TEST(WaitableQueue_Coverage, WaitUntilEmptyWithActiveDrain)
 	EXPECT_EQ(static_cast<size_t>(ITEM_COUNT), queue.size());
 
 	// Start consumer
-	std::jthread consumer([&](std::stop_token st) {
-		while (!st.stop_requested())
-		{
-			auto item = queue.tryWaitItem(std::chrono::milliseconds(5));
-			if (!item.has_value() && queue.size() == 0) break;
-		}
-	});
+	std::jthread consumer(
+			[&](std::stop_token st)
+			{
+				while (!st.stop_requested())
+				{
+					auto item = queue.tryWaitItem(std::chrono::milliseconds(5));
+					if (!item.has_value() && queue.size() == 0) break;
+				}
+			});
 
 	// Wait for queue to empty
 	auto result = queue.waitUntilEmpty(std::chrono::milliseconds(3000));
@@ -777,24 +797,28 @@ TEST(WaitableQueue_Coverage, TryWaitItemRaceCondition)
 TEST(WaitableQueue_Coverage, StressTest)
 {
 	siddiqsoft::WaitableQueue<int> queue;
-	std::atomic_int totalProcessed {0};
-	const int TOTAL_ITEMS = 1000;
+	std::atomic_int                totalProcessed {0};
+	const int                      TOTAL_ITEMS = 1000;
 
-	std::jthread producer([&](std::stop_token st) {
-		for (int i = 0; i < TOTAL_ITEMS && !st.stop_requested(); ++i)
-		{
-			int val = i;
-			queue.push(std::move(val));
-		}
-	});
+	std::jthread producer(
+			[&](std::stop_token st)
+			{
+				for (int i = 0; i < TOTAL_ITEMS && !st.stop_requested(); ++i)
+				{
+					int val = i;
+					queue.push(std::move(val));
+				}
+			});
 
-	std::jthread consumer([&](std::stop_token st) {
-		while (!st.stop_requested())
-		{
-			auto item = queue.tryWaitItem(std::chrono::milliseconds(5));
-			if (item.has_value()) totalProcessed++;
-		}
-	});
+	std::jthread consumer(
+			[&](std::stop_token st)
+			{
+				while (!st.stop_requested())
+				{
+					auto item = queue.tryWaitItem(std::chrono::milliseconds(5));
+					if (item.has_value()) totalProcessed++;
+				}
+			});
 
 	producer.join();
 	queue.waitUntilEmpty(std::chrono::milliseconds(5000));
