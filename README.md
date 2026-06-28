@@ -112,7 +112,7 @@ WaitableQueue<StorageType>
 
 # API Documentation
 
-For detailed API documentation, method signatures, and comprehensive examples, see [API.md](API.md).
+For detailed API documentation, method signatures, and comprehensive examples, see [API.md](docs/API.md) and some notes on [tests](docs/Tests.md).
 
 # Usage
 
@@ -185,17 +185,6 @@ int main() {
 # Versioning
 
 Uses [GitVersion](https://gitversion.net/) for semantic versioning (`MAJOR.MINOR.PATCH`). Version is automatically determined from git history.
-
----
-
-# Documentation
-
-- [API.md](API.md) - Complete API reference with examples
-- [TEST_DOCUMENTATION.md](TEST_DOCUMENTATION.md) - Comprehensive test documentation
-- [TEST_COVERAGE.md](TEST_COVERAGE.md) - Coverage summary
-- [COVERAGE_REPORT.md](COVERAGE_REPORT.md) - Coverage metrics
-- [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md) - Implementation guide
-- [DOCUMENTATION_UPDATE.md](DOCUMENTATION_UPDATE.md) - Documentation updates
 
 ---
 
