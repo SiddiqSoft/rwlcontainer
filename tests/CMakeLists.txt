@@ -28,6 +28,8 @@ if(${${PROJECT_NAME}_BUILD_TESTS})
     target_sources( ${TESTPROJ}
                     PRIVATE
                     ${PROJECT_SOURCE_DIR}/tests/queuetest.cpp
+                    ${PROJECT_SOURCE_DIR}/tests/fifo_test.cpp
+                    ${PROJECT_SOURCE_DIR}/tests/coverage_test.cpp
                     ${PROJECT_SOURCE_DIR}/tests/test.cpp
                     ${PROJECT_SOURCE_DIR}/tests/stress_test.cpp)
 

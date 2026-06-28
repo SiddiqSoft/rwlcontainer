@@ -33,10 +33,22 @@ All platforms are tested in the CI/CD pipeline with comprehensive test coverage.
 
 ## Testing
 
-- Unit tests using Google Test (gtest)
+- **107 comprehensive test cases** using Google Test (gtest)
+- **Full FIFO ordering verification** for WaitableQueue (24 dedicated tests)
+- **100% method coverage** for both RWLContainer and WaitableQueue
 - Code coverage reporting (Linux builds)
 - Automated testing on all supported platforms via Azure Pipelines
-- Stress testing included in test suite
+- Stress testing with up to 5000+ items and multiple concurrent threads
+- Edge case and concurrent access pattern testing
+
+### Test Files
+
+- `tests/test.cpp` - RWLContainer core tests (34 tests)
+- `tests/queuetest.cpp` - WaitableQueue core tests (20 tests)
+- `tests/coverage_test.cpp` - Comprehensive coverage tests (29 tests)
+- `tests/fifo_test.cpp` - FIFO ordering verification tests (24 tests)
+
+For detailed test documentation, see [TEST_DOCUMENTATION.md](TEST_DOCUMENTATION.md).
 
 ### Known Test Behavior
 

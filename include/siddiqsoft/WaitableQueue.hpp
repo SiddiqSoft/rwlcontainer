@@ -43,7 +43,7 @@
 #include <mutex>
 #include <iostream>
 #include <concepts>
-#include <queue>
+#include <deque>
 #include <functional>
 #include <memory>
 #include <string>
@@ -66,11 +66,11 @@ namespace siddiqsoft
      *        Use this container in a multi-threaded scenario with workers processing IO from this queued list.
      *        Implementes a reader-writer lock to alleviate client burden.
      *        The client threads must deal with timeouts on empty queue.
+     *        Uses deque<> internally; changed from queue<>
 	 * 
 	 * @tparam StorageType Any moveable object
-	 * @tparam StorageContainer Defaults to a std::queue<StorageType>
 	 */
-	template <class StorageType, class StorageContainer = std::queue<StorageType>>
+	template <class StorageType>
 		requires Movable<StorageType>
 	class WaitableQueue
 	{
@@ -104,7 +104,7 @@ namespace siddiqsoft
 			if (RWLock _ {_containerMutex}; true)
 			{
 				_counterAdds++;
-				_container.push(std::move(value));
+				_container.push_back(std::move(value));
 			}
 			// Must be outside the lock!
 			_signal.release();
@@ -120,7 +120,7 @@ namespace siddiqsoft
 			if (RWLock _ {_containerMutex}; true)
 			{
 				_counterAdds++;
-				_container.emplace(std::move(value));
+				_container.emplace_back(std::move(value));
 			}
 			// Must be outside the lock!
 			_signal.release();
@@ -178,7 +178,7 @@ namespace siddiqsoft
 					// Using this scope guard allows us to minimize object movement
 					siddiqsoft::RunOnEnd scopeCleanup {[&]()
 					                                   {
-														   _container.pop();
+														   _container.pop_front();
 														   _counterRemoves++;
 													   }};
 					// Return the object via move since it will be popped by the scope guard
@@ -223,15 +223,15 @@ namespace siddiqsoft
 		nlohmann::json toJson()
 		{
 			return nlohmann::json {
-					{"_typver", "WaitableQueue/1.0.0"}, {"adds", _counterAdds}, {"removes", _counterRemoves}, {"size", size()}};
+					{"_typver", "WaitableQueue/1.0.0"}, {"adds", addCounter()}, {"removes", removeCounter()}, {"size", size()}};
 		}
 #endif
 
 	private:
 		/// @brief Semaphore with default max signals.
 		std::counting_semaphore<> _signal {0};
-		/// @brief The container (defaults to std::queue)
-		StorageContainer _container;
+		/// @brief The container
+		std::deque<StorageType> _container {};
 		/// @brief The shared mutex used to perform reader-writer lock
 		mutable std::shared_mutex _containerMutex;
 		/// @brief Tracks the total number of adds to the container
