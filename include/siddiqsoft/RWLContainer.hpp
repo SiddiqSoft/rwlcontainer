@@ -45,10 +45,30 @@
 #include <shared_mutex>
 #include <type_traits>
 
+
 namespace siddiqsoft
 {
-	/// @brief Implements an unordered map container with reader-writer locking. The internal storage is via shared_ptr so the
-	/// @tparam StorageType Can be any element but avoid using pointers, shared_ptr, unique_ptr as the underlying storage is shared_ptr<StorageType>
+	/// @brief Thread-safe dictionary container with reader-writer locking
+	///
+	/// Implements an unordered map container with reader-writer locking for efficient concurrent access.
+	/// Multiple threads can read simultaneously, while writes are exclusive. All values are stored as
+	/// shared_ptr for automatic memory management.
+	///
+	/// @tparam KeyType The key type (e.g., std::string, int)
+	/// @tparam StorageType The value type to store (avoid pointers; use value types)
+	/// @tparam StorageContainer The underlying container type (defaults to std::unordered_map)
+	///
+	/// @note Thread-safe: All operations are protected by std::shared_mutex
+	/// @note Values are stored as shared_ptr<StorageType> for automatic memory management
+	/// @note Configuration flags: ReplaceExisting, FailOnCollission
+	///
+	/// @example
+	/// @code
+	/// siddiqsoft::RWLContainer<std::string, int> cache;
+	/// cache.add("key1", 42);
+	/// auto value = cache.find("key1");
+	/// if (value) { std::cout << *value << std::endl; }
+	/// @endcode
 	template <class KeyType,
 	          class StorageType,
 	          typename StorageContainer = std::unordered_map<KeyType, std::shared_ptr<StorageType>>>
@@ -57,13 +77,42 @@ namespace siddiqsoft
 	public:
 		using StorageTypePtr = std::shared_ptr<StorageType>;
 
+
+	private:
+		StorageContainer          _container {};
+		mutable std::shared_mutex _containerMutex {};
+		std::atomic_uint64_t      _counterAdds {};
+		std::atomic_uint64_t      _counterRemoves {};
+
+	public:
+		/// @brief If true, replaces existing items on add; if false, returns existing item
 		bool ReplaceExisting {false};
+
+		/// @brief If true, fails (returns empty shared_ptr) on key collision; if false, returns existing item
 		bool FailOnCollission {false};
 
-		/// @brief Adds an element by taking ownership and storing it within a shared_ptr
-		/// @param key Case-sensitive string
-		/// @param value Non pointer (moved into a shared_ptr)
-		/// @return The newly inserted item or existing item
+		/// @brief Adds an element by moving a value into a shared_ptr
+		///
+		/// Adds or updates an element in the container. The value is moved into a shared_ptr
+		/// for automatic memory management. Behavior on key collision is controlled by
+		/// ReplaceExisting and FailOnCollission flags.
+		///
+		/// @param key The key to associate with the value
+		/// @param value The value to store (moved into shared_ptr)
+		/// @return shared_ptr to the newly inserted or existing item, or empty shared_ptr on collision with FailOnCollission=true
+		///
+		/// @note Thread-safe: Uses exclusive write lock
+		/// @note Collision behavior:
+		///   - FailOnCollission=true: Returns empty shared_ptr
+		///   - ReplaceExisting=true: Replaces existing value
+		///   - Otherwise: Returns existing value
+		///
+		/// @throws std::runtime_error if insertion fails
+		///
+		/// @example
+		/// @code
+		/// auto item = container.add("key1", MyType{42, "value"});
+		/// @endcode
 		StorageTypePtr add(const KeyType& key, StorageType&& value)
 		{
 			std::unique_lock<std::shared_mutex> myWriterLock(_containerMutex);
@@ -83,11 +132,27 @@ namespace siddiqsoft
 			throw std::runtime_error(std::format("{} - Failed to add for key:{}", __FUNCTION__, key));
 		}
 
-
-		/// @brief Adds an element by taking ownership of the shared_ptr
-		/// @param key Case-sensitive string
-		/// @param value shared_ptr (moved into the container)
-		/// @return The newly inserted item or existing item
+		/// @brief Adds an element by moving an existing shared_ptr
+		///
+		/// Adds or updates an element in the container using an existing shared_ptr.
+		/// This overload is useful when you already have a shared_ptr and want to transfer ownership.
+		/// Behavior on key collision is controlled by ReplaceExisting and FailOnCollission flags.
+		///
+		/// @param key The key to associate with the value
+		/// @param value The shared_ptr to store (moved into container)
+		/// @return shared_ptr to the newly inserted or existing item, or empty shared_ptr on collision with FailOnCollission=true
+		///
+		/// @note Thread-safe: Uses exclusive write lock
+		/// @note Collision behavior same as add(key, StorageType&&)
+		/// @note The input shared_ptr is moved; original reference becomes invalid
+		///
+		/// @throws std::runtime_error if insertion fails
+		///
+		/// @example
+		/// @code
+		/// auto ptr = std::make_shared<MyType>(42, "value");
+		/// auto item = container.add("key1", std::move(ptr));
+		/// @endcode
 		StorageTypePtr add(const KeyType& key, StorageTypePtr&& value)
 		{
 			std::unique_lock<std::shared_mutex> myWriterLock(_containerMutex);
@@ -107,13 +172,30 @@ namespace siddiqsoft
 			throw std::runtime_error(std::format("{} - Failed to add for key:{}", __FUNCTION__, key));
 		}
 
-
-		/// @brief This method allows for adding of items via callback if the item does not exist
-		/// If an existing item is found, it is returned without invoking the callback
-		/// @param key The key to add a new itme
-		/// @param newObjectCallback Callback accepts key and returns the shared_ptr object to add associated with the key.
-		/// WARNING! The add happens within a lock!
-		/// @return The newly created object or an existing object associated with the key.
+		/// @brief Adds an element via callback for lazy initialization
+		///
+		/// Adds an element by invoking a callback function if the key doesn't exist.
+		/// If the key already exists, returns the existing value without invoking the callback.
+		/// Useful for lazy initialization patterns.
+		///
+		/// @param key The key to add a new item
+		/// @param newObjectCallback Callback function that accepts the key and returns a shared_ptr<StorageType>.
+		///                          Only invoked if key doesn't exist (or ReplaceExisting=true).
+		/// @return shared_ptr to the newly created or existing item, or empty shared_ptr on collision with FailOnCollission=true
+		///
+		/// @note Thread-safe: Uses exclusive write lock
+		/// @note The callback executes within the write lock, so keep it brief
+		/// @note Collision behavior same as add(key, StorageType&&)
+		/// @note Useful for lazy initialization: container.add("key", [](const auto& k) { return std::make_shared<MyType>(k); })
+		///
+		/// @throws std::runtime_error if insertion fails
+		///
+		/// @example
+		/// @code
+		/// auto item = container.add("key1", [](const auto& key) {
+		///     return std::make_shared<MyType>(key);
+		/// });
+		/// @endcode
 		StorageTypePtr add(const KeyType& key, std::function<StorageTypePtr(const KeyType&)>&& newObjectCallback)
 		{
 			std::unique_lock<std::shared_mutex> myWriterLock(_containerMutex);
@@ -133,7 +215,27 @@ namespace siddiqsoft
 			throw std::runtime_error(std::format("{} - Failed to add for key:{}", __FUNCTION__, key));
 		}
 
-
+		/// @brief Removes and returns an element by key
+		///
+		/// Removes an element from the container and returns it. If the key doesn't exist,
+		/// returns an empty shared_ptr. The removed item is returned to the caller, allowing
+		/// for cleanup or further processing.
+		///
+		/// @param key The key to remove
+		/// @return shared_ptr to the removed item, or empty shared_ptr if key not found
+		///
+		/// @note Thread-safe: Uses exclusive write lock
+		/// @note The returned shared_ptr keeps the item alive even after removal from container
+		/// @note Increments the remove counter
+		/// @note [[nodiscard]] attribute encourages checking the return value
+		///
+		/// @example
+		/// @code
+		/// auto removed = container.remove("key1");
+		/// if (removed) {
+		///     std::cout << "Removed item" << std::endl;
+		/// }
+		/// @endcode
 		[[nodiscard]] StorageTypePtr remove(const KeyType& key)
 		{
 			std::unique_lock<std::shared_mutex> myWriterLock(_containerMutex);
@@ -152,7 +254,25 @@ namespace siddiqsoft
 			return {};
 		}
 
-
+		/// @brief Finds and returns an element by key without removing it
+		///
+		/// Searches for an element in the container and returns it if found.
+		/// The element remains in the container. This is a read-only operation.
+		///
+		/// @param key The key to find
+		/// @return shared_ptr to the found item, or empty shared_ptr if key not found
+		///
+		/// @note Thread-safe: Uses shared read lock (allows concurrent reads)
+		/// @note Does not modify the container
+		/// @note Multiple threads can call find() simultaneously
+		///
+		/// @example
+		/// @code
+		/// auto item = container.find("key1");
+		/// if (item) {
+		///     std::cout << "Found: " << *item << std::endl;
+		/// }
+		/// @endcode
 		StorageTypePtr find(const KeyType& key)
 		{
 			std::shared_lock<std::shared_mutex> myReaderLock(_containerMutex);
@@ -162,7 +282,20 @@ namespace siddiqsoft
 			return {};
 		}
 
-
+		/// @brief Returns the number of elements in the container
+		///
+		/// Gets the current size of the container. This is a read-only operation.
+		///
+		/// @return The number of elements currently in the container
+		///
+		/// @note Thread-safe: Uses shared read lock
+		/// @note O(1) operation
+		/// @note Multiple threads can call size() simultaneously
+		///
+		/// @example
+		/// @code
+		/// std::cout << "Container has " << container.size() << " items" << std::endl;
+		/// @endcode
 		auto size() const -> size_t
 		{
 			std::shared_lock<std::shared_mutex> myReaderLock(_containerMutex);
@@ -170,7 +303,26 @@ namespace siddiqsoft
 			return _container.size();
 		}
 
-
+		/// @brief Iterates through all elements and returns the first match
+		///
+		/// Scans through all elements in the container, calling the callback for each one.
+		/// Returns the first element where the callback returns true, or empty shared_ptr if no match.
+		/// Useful for custom search logic or filtering.
+		///
+		/// @param scanCallback Callback function that receives (key, value) and returns true to stop iteration
+		/// @return shared_ptr to the first matching item, or empty shared_ptr if no match found
+		///
+		/// @note Thread-safe: Uses shared read lock (entire scan is atomic)
+		/// @note The callback is invoked for each element until it returns true
+		/// @note Callback receives const reference to key and reference to value
+		/// @note Multiple threads can call scan() simultaneously
+		///
+		/// @example
+		/// @code
+		/// auto item = container.scan([](const auto& key, auto& value) {
+		///     return key.find("target") != std::string::npos;
+		/// });
+		/// @endcode
 		StorageTypePtr scan(std::function<bool(const KeyType&, StorageTypePtr&)> scanCallback)
 		{
 			std::shared_lock<std::shared_mutex> myReaderLock(_containerMutex);
@@ -185,10 +337,31 @@ namespace siddiqsoft
 
 #ifdef INCLUDE_NLOHMANN_JSON_HPP_
 	public:
-		// If the JSON library is included in the current project, then make the serializer available.
+		/// @brief Serializes container metadata to JSON
+		///
+		/// Returns a JSON object containing container statistics and configuration.
+		/// Only available if nlohmann/json.hpp is included before this header.
+		///
+		/// @return JSON object with:
+		///   - _typver: Type and version string
+		///   - adds: Total number of add operations
+		///   - removes: Total number of remove operations
+		///   - ReplaceExisting: Current configuration flag
+		///   - FailOnCollission: Current configuration flag
+		///   - size: Current number of items
+		///
+		/// @note Thread-safe: Uses shared read lock
+		/// @note Requires INCLUDE_NLOHMANN_JSON_HPP_ to be defined
+		///
+		/// @example
+		/// @code
+		/// #include "nlohmann/json.hpp"
+		/// auto json = container.toJson();
+		/// std::cout << json.dump(2) << std::endl;
+		/// @endcode
 		nlohmann::json toJson()
 		{
-			return nlohmann::json {{"_typver", "RWLContainer/1.0.0"},
+			return nlohmann::json {{"_typver", "RWLContainer/1.5.0"},
 			                       {"adds", _counterAdds.load()},
 			                       {"removes", _counterRemoves.load()},
 			                       {"ReplaceExisting", ReplaceExisting},
@@ -196,12 +369,6 @@ namespace siddiqsoft
 			                       {"size", size()}};
 		}
 #endif
-
-	private:
-		StorageContainer          _container {};
-		mutable std::shared_mutex _containerMutex {};
-		std::atomic_uint64_t      _counterAdds {};
-		std::atomic_uint64_t      _counterRemoves {};
 	};
 } // namespace siddiqsoft
 
