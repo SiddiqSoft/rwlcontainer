@@ -5,4 +5,9 @@
       <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
+  
+  <!-- Include natvis files for debugger visualization -->
+  <ItemGroup>
+    <Natvis Include="$(MSBuildThisFileDirectory)SiddiqSoft.RWLContainer.natvis" />
+  </ItemGroup>
 </Project>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  
+  <!-- RWLContainer visualization -->
+  <Type Name="siddiqsoft::RWLContainer&lt;*,*,*&gt;">
+    <DisplayString>RWLContainer (size={_container.size()}, adds={_counterAdds}, removes={_counterRemoves})</DisplayString>
+    <Expand>
+      <Item Name="Size">_container.size()</Item>
+      <Item Name="Total Adds">_counterAdds</Item>
+      <Item Name="Total Removes">_counterRemoves</Item>
+      <Item Name="Replace Existing">ReplaceExisting</Item>
+      <Item Name="Fail On Collision">FailOnCollission</Item>
+      <IndexListItems>
+        <Size>_container.size()</Size>
+        <ValueNode>_container[$i]</ValueNode>
+      </IndexListItems>
+    </Expand>
+  </Type>
+
+  <!-- WaitableQueue visualization -->
+  <Type Name="siddiqsoft::WaitableQueue&lt;*,*&gt;">
+    <DisplayString>WaitableQueue (size={_container.size()}, adds={_counterAdds}, removes={_counterRemoves})</DisplayString>
+    <Expand>
+      <Item Name="Size">_container.size()</Item>
+      <Item Name="Total Adds">_counterAdds</Item>
+      <Item Name="Total Removes">_counterRemoves</Item>
+      <IndexListItems>
+        <Size>_container.size()</Size>
+        <ValueNode>_container[$i]</ValueNode>
+      </IndexListItems>
+    </Expand>
+  </Type>
+
+  <!-- Simplified WaitableQueue for std::queue storage -->
+  <Type Name="siddiqsoft::WaitableQueue&lt;*,std::queue&lt;*&gt;&gt;">
+    <DisplayString>WaitableQueue (size={_container.c.size()}, adds={_counterAdds}, removes={_counterRemoves})</DisplayString>
+    <Expand>
+      <Item Name="Size">_container.c.size()</Item>
+      <Item Name="Total Adds">_counterAdds</Item>
+      <Item Name="Total Removes">_counterRemoves</Item>
+      <IndexListItems>
+        <Size>_container.c.size()</Size>
+        <ValueNode>_container.c[$i]</ValueNode>
+      </IndexListItems>
+    </Expand>
+  </Type>
+
+</AutoVisualizer>

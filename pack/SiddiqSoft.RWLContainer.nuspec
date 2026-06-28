@@ -39,5 +39,7 @@
     
 		<!-- MSBuild .targets files -->
 		<file src="SiddiqSoft.RWLContainer.targets" target="build\native" />
+		<!-- Debugger visualization files -->
+		<file src="SiddiqSoft.RWLContainer.natvis" target="build\native" />
 	</files>
 </package>
