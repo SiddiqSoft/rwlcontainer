@@ -351,7 +351,7 @@
     <div class="container">
         <header>
             <h1>🔒 RWLContainer</h1>
-            <p>Production-Ready Thread-Safe C++20 Containers</p>
+            <p>Thread-Safe C++20 Containers</p>
             
             <div class="badges">
                 <span class="badge cpp">C++20</span>
@@ -373,10 +373,6 @@
                     C++20 templates
                 </div>
                 <div class="header-feature">
-                    <strong>✅ Production-Ready</strong>
-                    Full test coverage
-                </div>
-                <div class="header-feature">
                     <strong>📦 Zero-Copy</strong>
                     Move semantics
                 </div>
@@ -393,37 +389,20 @@
             </div>
         </header>
         
-        <div class="content">
-            <div class="card">
-                <h2>RWLContainer</h2>
-                <p>A thread-safe dictionary with reader-writer locking for efficient concurrent access.</p>
-                <ul>
-                    <li>Multiple concurrent readers</li>
-                    <li>Exclusive writer access</li>
-                    <li>Automatic memory management</li>
-                    <li>JSON serialization support</li>
-                </ul>
-            </div>
-            
-            <div class="card">
-                <h2>WaitableQueue</h2>
-                <p>A thread-safe queue for producer-consumer patterns with timeout support.</p>
-                <ul>
-                    <li>Efficient producer-consumer</li>
-                    <li>Timeout-based waiting</li>
-                    <li>Atomic counters</li>
-                    <li>JSON serialization support</li>
-                </ul>
-            </div>
-        </div>
-        
         <div id="api" class="api-section">
             <h2>Class API & Structure</h2>
             
             <div class="api-grid">
                 <div class="api-class">
-                    <h3>RWLContainer</h3>
-                    <p>Thread-safe dictionary with reader-writer locking. Template parameters: KeyType, StorageType, StorageContainer.</p>
+                    <a href="api/RWLContainer.html"><h3>RWLContainer</h3></a>
+                    
+                    <p>A thread-safe dictionary with reader-writer locking for efficient concurrent access.</p>
+                    <ul>
+                        <li>Multiple concurrent readers</li>
+                        <li>Exclusive writer access</li>
+                        <li>Automatic memory management</li>
+                        <li>JSON serialization support</li>
+                    </ul>
                     
                     <strong>Configuration:</strong>
                     <ul class="method-list">
@@ -447,8 +426,15 @@
                 </div>
                 
                 <div class="api-class">
-                    <h3>WaitableQueue</h3>
-                    <p>Thread-safe queue for producer-consumer patterns. Template parameter: StorageType (must be movable).</p>
+                    <a href="api/WaitableQueue.html"><h3>WaitableQueue</h3></a>
+
+                    <p>A thread-safe queue for producer-consumer patterns with timeout support.</p>
+                    <ul>
+                        <li>Efficient producer-consumer</li>
+                        <li>Timeout-based waiting</li>
+                        <li>Atomic counters</li>
+                        <li>JSON serialization support</li>
+                    </ul>
                     
                     <strong>Characteristics:</strong>
                     <ul class="method-list">
