@@ -143,54 +143,6 @@
             transform: translateY(-2px);
         }
         
-        .content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .card {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        .card h2 {
-            color: #667eea;
-            margin-bottom: 10px;
-            font-size: 1.2em;
-        }
-        
-        .card p {
-            color: #666;
-            line-height: 1.5;
-            margin-bottom: 10px;
-            font-size: 0.9em;
-        }
-        
-        .card ul {
-            list-style: none;
-            padding-left: 0;
-        }
-        
-        .card li {
-            color: #666;
-            padding: 5px 0;
-            padding-left: 20px;
-            position: relative;
-            font-size: 0.85em;
-        }
-        
-        .card li:before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            color: #28a745;
-            font-weight: bold;
-        }
-        
         .api-section {
             background: white;
             border-radius: 8px;
@@ -223,10 +175,42 @@
             font-size: 1.3em;
         }
         
+        .api-class h3 a {
+            color: #333;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .api-class h3 a:hover {
+            color: #667eea;
+        }
+        
         .api-class p {
             color: #666;
             margin-bottom: 15px;
             line-height: 1.6;
+        }
+        
+        .api-class ul {
+            list-style: none;
+            padding-left: 0;
+            margin-bottom: 15px;
+        }
+        
+        .api-class ul li {
+            color: #666;
+            padding: 5px 0;
+            padding-left: 20px;
+            position: relative;
+            font-size: 0.9em;
+        }
+        
+        .api-class ul li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #28a745;
+            font-weight: bold;
         }
         
         .method-list {
@@ -320,10 +304,6 @@
         }
         
         @media (max-width: 768px) {
-            .content {
-                grid-template-columns: 1fr;
-            }
-            
             .api-grid {
                 grid-template-columns: 1fr;
             }
@@ -351,7 +331,7 @@
     <div class="container">
         <header>
             <h1>🔒 RWLContainer</h1>
-            <p>Thread-Safe C++20 Containers</p>
+            <p>Production-Ready Thread-Safe C++20 Containers</p>
             
             <div class="badges">
                 <span class="badge cpp">C++20</span>
@@ -371,6 +351,10 @@
                 <div class="header-feature">
                     <strong>🎯 Type-Safe</strong>
                     C++20 templates
+                </div>
+                <div class="header-feature">
+                    <strong>✅ Production-Ready</strong>
+                    Full test coverage
                 </div>
                 <div class="header-feature">
                     <strong>📦 Zero-Copy</strong>
