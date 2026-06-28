@@ -166,7 +166,7 @@
             transform: translateY(-2px);
         }
         
-        .features {
+        .api-section {
             background: white;
             border-radius: 8px;
             padding: 30px;
@@ -174,37 +174,141 @@
             margin-bottom: 30px;
         }
         
-        .features h2 {
+        .api-section h2 {
             color: #667eea;
             margin-bottom: 20px;
             text-align: center;
+            font-size: 1.8em;
         }
         
-        .features-grid {
+        .api-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
         }
         
-        .feature-item {
-            text-align: center;
-            padding: 20px;
+        .api-class {
+            border-left: 4px solid #667eea;
+            padding-left: 20px;
         }
         
-        .feature-item h3 {
+        .api-class h3 {
             color: #333;
-            margin-bottom: 10px;
-            font-size: 1.2em;
+            margin-bottom: 15px;
+            font-size: 1.3em;
         }
         
-        .feature-item p {
+        .api-class p {
             color: #666;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .method-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .method-list li {
+            color: #666;
+            padding: 8px 0;
+            padding-left: 20px;
+            position: relative;
             font-size: 0.95em;
         }
         
-        .feature-icon {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+        .method-list li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .method-list li code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        
+        .doc-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+        
+        .doc-link:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+        
+        .quick-start {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        .quick-start h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        
+        .quick-start pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin-bottom: 15px;
+        }
+        
+        .quick-start code {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #333;
+        }
+        
+        .features-mini {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        .features-mini h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .features-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .feature-badge {
+            background: #f0f0f0;
+            padding: 12px 15px;
+            border-radius: 5px;
+            text-align: center;
+            color: #333;
+            font-size: 0.95em;
+        }
+        
+        .feature-badge strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 5px;
         }
         
         footer {
@@ -227,6 +331,10 @@
         
         @media (max-width: 768px) {
             .content {
+                grid-template-columns: 1fr;
+            }
+            
+            .api-grid {
                 grid-template-columns: 1fr;
             }
             
@@ -258,7 +366,7 @@
             </div>
             
             <div class="cta-buttons">
-                <a href="#documentation" class="btn btn-primary">📚 Documentation</a>
+                <a href="#api" class="btn btn-primary">📚 API Documentation</a>
                 <a href="https://github.com/SiddiqSoft/RWLContainer" class="btn btn-secondary">🔗 GitHub</a>
                 <a href="https://www.nuget.org/packages/SiddiqSoft.RWLContainer/" class="btn btn-secondary">📦 NuGet</a>
             </div>
@@ -288,43 +396,95 @@
             </div>
         </div>
         
-        <div class="features">
+        <div class="features-mini">
             <h2>Key Features</h2>
-            <div class="features-grid">
-                <div class="feature-item">
-                    <div class="feature-icon">🔐</div>
-                    <h3>Thread-Safe</h3>
-                    <p>All operations protected by synchronization primitives</p>
+            <div class="features-list">
+                <div class="feature-badge">
+                    <strong>🔐 Thread-Safe</strong>
+                    Synchronization primitives
                 </div>
-                <div class="feature-item">
-                    <div class="feature-icon">⚡</div>
-                    <h3>High Performance</h3>
-                    <p>Reader-writer locking for concurrent reads</p>
+                <div class="feature-badge">
+                    <strong>⚡ High Performance</strong>
+                    Reader-writer locking
                 </div>
-                <div class="feature-item">
-                    <div class="feature-icon">🎯</div>
-                    <h3>Type-Safe</h3>
-                    <p>Full C++20 template support</p>
+                <div class="feature-badge">
+                    <strong>🎯 Type-Safe</strong>
+                    C++20 templates
                 </div>
-                <div class="feature-item">
-                    <div class="feature-icon">✅</div>
-                    <h3>Production-Ready</h3>
-                    <p>Comprehensive test coverage and CI/CD</p>
+                <div class="feature-badge">
+                    <strong>✅ Production-Ready</strong>
+                    Full test coverage
                 </div>
-                <div class="feature-item">
-                    <div class="feature-icon">📦</div>
-                    <h3>Zero-Copy</h3>
-                    <p>Move semantics and shared_ptr</p>
+                <div class="feature-badge">
+                    <strong>📦 Zero-Copy</strong>
+                    Move semantics
                 </div>
-                <div class="feature-item">
-                    <div class="feature-icon">📄</div>
-                    <h3>JSON Support</h3>
-                    <p>Optional JSON serialization</p>
+                <div class="feature-badge">
+                    <strong>📄 JSON Support</strong>
+                    Serialization
                 </div>
             </div>
         </div>
         
-        <div id="documentation" class="card">
+        <div id="api" class="api-section">
+            <h2>Class API & Structure</h2>
+            
+            <div class="api-grid">
+                <div class="api-class">
+                    <h3>RWLContainer</h3>
+                    <p>Thread-safe dictionary with reader-writer locking. Template parameters: KeyType, StorageType, StorageContainer.</p>
+                    
+                    <strong>Configuration:</strong>
+                    <ul class="method-list">
+                        <li><code>ReplaceExisting</code> - Replace on collision</li>
+                        <li><code>FailOnCollission</code> - Fail on collision</li>
+                    </ul>
+                    
+                    <strong>Methods:</strong>
+                    <ul class="method-list">
+                        <li><code>add(key, value)</code> - Add by value</li>
+                        <li><code>add(key, shared_ptr)</code> - Add by pointer</li>
+                        <li><code>add(key, callback)</code> - Add via callback</li>
+                        <li><code>remove(key)</code> - Remove and return</li>
+                        <li><code>find(key)</code> - Find without removing</li>
+                        <li><code>size()</code> - Get element count</li>
+                        <li><code>scan(callback)</code> - Iterate and find</li>
+                        <li><code>toJson()</code> - Serialize metadata</li>
+                    </ul>
+                    
+                    <a href="wiki/RWLContainer.md" class="doc-link">📖 Full API Reference</a>
+                </div>
+                
+                <div class="api-class">
+                    <h3>WaitableQueue</h3>
+                    <p>Thread-safe queue for producer-consumer patterns. Template parameter: StorageType (must be movable).</p>
+                    
+                    <strong>Characteristics:</strong>
+                    <ul class="method-list">
+                        <li>FIFO ordering</li>
+                        <li>Non-copyable, non-movable</li>
+                        <li>Efficient waiting with semaphore</li>
+                        <li>Timeout support</li>
+                    </ul>
+                    
+                    <strong>Methods:</strong>
+                    <ul class="method-list">
+                        <li><code>push(value)</code> - Add to queue</li>
+                        <li><code>emplace(value)</code> - Construct in-place</li>
+                        <li><code>tryWaitItem(timeout)</code> - Wait for item</li>
+                        <li><code>waitUntilEmpty(timeout)</code> - Wait until empty</li>
+                        <li><code>size()</code> - Get queue size</li>
+                        <li><code>addCounter()</code> - Total adds</li>
+                        <li><code>removeCounter()</code> - Total removes</li>
+                        <li><code>toJson()</code> - Serialize metadata</li>
+                    </ul>
+                    
+                    <a href="wiki/WaitableQueue.md" class="doc-link">📖 Full API Reference</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="quick-start">
             <h2>Quick Start</h2>
             <p><strong>Installation:</strong></p>
             <pre><code># Using NuGet (Windows)
@@ -333,7 +493,7 @@ nuget install SiddiqSoft.RWLContainer
 # Using CPM (CMake)
 CPMAddPackage("gh:SiddiqSoft/RWLContainer@1.5.0")</code></pre>
             
-            <p style="margin-top: 20px;"><strong>Basic Usage:</strong></p>
+            <p><strong>RWLContainer Example:</strong></p>
             <pre><code>#include "siddiqsoft/RWLContainer.hpp"
 
 int main() {
@@ -348,8 +508,31 @@ int main() {
     return 0;
 }</code></pre>
             
+            <p><strong>WaitableQueue Example:</strong></p>
+            <pre><code>#include "siddiqsoft/WaitableQueue.hpp"
+
+int main() {
+    siddiqsoft::WaitableQueue&lt;std::string&gt; queue;
+    
+    std::thread producer([&]() {
+        queue.push("item1");
+        queue.push("item2");
+    });
+    
+    std::thread consumer([&]() {
+        while (auto item = queue.tryWaitItem(std::chrono::milliseconds(500))) {
+            std::cout &lt;&lt; "Got: " &lt;&lt; *item &lt;&lt; std::endl;
+        }
+    });
+    
+    producer.join();
+    consumer.join();
+    
+    return 0;
+}</code></pre>
+            
             <p style="margin-top: 20px;">
-                <strong>📖 Full Documentation:</strong> Visit the <a href="https://github.com/SiddiqSoft/RWLContainer/wiki">GitHub Wiki</a> for complete API reference and examples.
+                <strong>📖 More Examples:</strong> See <a href="wiki/Examples.md">Examples.md</a> and <a href="wiki/Getting-Started.md">Getting-Started.md</a> for detailed usage patterns.
             </p>
         </div>
         
@@ -357,7 +540,8 @@ int main() {
             <p>
                 © 2024 Siddiq Software LLC. All rights reserved. | 
                 <a href="https://github.com/SiddiqSoft/RWLContainer">GitHub</a> | 
-                <a href="https://github.com/SiddiqSoft/RWLContainer/blob/main/LICENSE">License</a>
+                <a href="https://github.com/SiddiqSoft/RWLContainer/blob/main/LICENSE">License</a> |
+                <a href="wiki/Home.md">Documentation</a>
             </p>
         </footer>
     </div>
