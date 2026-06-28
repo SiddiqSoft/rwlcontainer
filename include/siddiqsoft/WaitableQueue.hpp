@@ -195,7 +195,7 @@ namespace siddiqsoft
          * 
          * @return auto 
          */
-		auto size() -> size_t const
+		auto size() const -> size_t const
 		{
 			RLock _ {_containerMutex};
 
