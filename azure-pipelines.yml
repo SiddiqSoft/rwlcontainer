@@ -105,11 +105,6 @@ parameters:
     default: false
     displayName: "Create GitHub release (auto-enabled on main/master)"
 
-  - name: PublishPages
-    type: boolean
-    default: false
-    displayName: "Publish to GitHub Pages (auto-enabled on main/master)"
-
   # Cleanup
   - name: Cleanup
     type: boolean
@@ -212,8 +207,3 @@ stages:
         parameters:
           displayName: GitHub Release
           PublishGitHub: ${{ variables.PublishGitHub }}
-
-      - template: .azure/az-publish-pages.yml
-        parameters:
-          displayName: GitHub Pages Publication
-          PublishPages: ${{ variables.PublishPages }}
