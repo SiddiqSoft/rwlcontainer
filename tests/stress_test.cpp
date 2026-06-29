@@ -1111,7 +1111,7 @@ TEST(WaitableQueueStress, WaitUntilEmptyOnEmptyThenFill)
 /// read-lock in waitUntilEmpty() and the write-lock in push()/tryWaitItem().
 TEST(WaitableQueueStress, WaitUntilEmptyTightLoopContention)
 {
-#ifdef __linux__
+#if defined(__linux__) && (defined(__aarch64__) || defined(_M_ARM64) || defined(_M_ARM64EC))
 	GTEST_SKIP() << "This test locks ONLY on Linux(arm64) builds. Skipping.";
 #endif
 	
