@@ -43,7 +43,7 @@
 #include <mutex>
 #include <iostream>
 #include <concepts>
-#include <queue>
+#include <deque>
 #include <functional>
 #include <memory>
 #include <string>
@@ -61,16 +61,50 @@ namespace siddiqsoft
 	concept Movable = std::is_move_constructible_v<T> && std::is_move_assignable_v<T>;
 
 
-	/**
-	 * @brief WaitableQueue. Object cannot be re-assigned, copied or moved as it stores a shared_mutex and counting_semaphore.
-     *        Use this container in a multi-threaded scenario with workers processing IO from this queued list.
-     *        Implementes a reader-writer lock to alleviate client burden.
-     *        The client threads must deal with timeouts on empty queue.
-	 * 
-	 * @tparam StorageType Any moveable object
-	 * @tparam StorageContainer Defaults to a std::queue<StorageType>
-	 */
-	template <class StorageType, class StorageContainer = std::queue<StorageType>>
+	/// @brief Thread-safe queue with timeout-based waiting for producer-consumer patterns
+	///
+	/// A high-performance queue designed for multi-threaded producer-consumer scenarios.
+	/// Features include:
+	/// - Reader-writer locking for efficient concurrent access
+	/// - Semaphore-based signaling for efficient waiting
+	/// - Timeout-based item retrieval
+	/// - FIFO (First-In-First-Out) ordering guarantee
+	/// - Non-copyable and non-movable (contains synchronization primitives)
+	///
+	/// @tparam StorageType Any moveable object (must satisfy Movable concept)
+	///
+	/// @note Non-copyable: Cannot be copied or moved due to shared_mutex and counting_semaphore
+	/// @note Thread-safe: All operations are protected by std::shared_mutex
+	/// @note FIFO ordering: Items are retrieved in the order they were added
+	/// @note Efficient waiting: Uses std::counting_semaphore for efficient producer-consumer signaling
+	///
+	/// @example
+	/// @code
+	/// siddiqsoft::WaitableQueue<std::string> queue;
+	///
+	/// // Producer thread
+	/// std::thread producer([&]() {
+	///     for (int i = 0; i < 10; ++i) {
+	///         queue.push(std::string("item_") + std::to_string(i));
+	///     }
+	/// });
+	///
+	/// // Consumer thread
+	/// std::thread consumer([&]() {
+	///     while (true) {
+	///         auto item = queue.tryWaitItem(std::chrono::milliseconds(500));
+	///         if (item) {
+	///             std::cout << "Processed: " << *item << std::endl;
+	///         } else {
+	///             break;  // Timeout, no more items
+	///         }
+	///     }
+	/// });
+	///
+	/// producer.join();
+	/// consumer.join();
+	/// @endcode
+	template <class StorageType>
 		requires Movable<StorageType>
 	class WaitableQueue
 	{
@@ -79,61 +113,113 @@ namespace siddiqsoft
 
 	public:
 		/// @brief Disallow the copy assignment operator
+		/// @note Queue cannot be copied due to synchronization primitives
 		WaitableQueue& operator=(const WaitableQueue&) = delete;
+
 		/// @brief Delete the copy constructor
+		/// @note Queue cannot be copied due to synchronization primitives
 		WaitableQueue(const WaitableQueue&) = delete;
+
 		/// @brief Disallow move constructor
+		/// @note Queue cannot be moved due to synchronization primitives
 		WaitableQueue(WaitableQueue&&) = delete;
+
 		/// @brief Disallow move assignment operator
+		/// @note Queue cannot be moved due to synchronization primitives
 		auto operator=(WaitableQueue&&) = delete;
-		/// @brief Default constructor.
-		/// We must declare this as default since we're removing
-		/// the move and copy constructors.
+
+		/// @brief Default constructor
+		/// @note Initializes semaphore with 0 signals and empty container
 		WaitableQueue() = default;
-		/// @brief Default destructor.
-		/// We must ask for the default destructor
+
+		/// @brief Default destructor
+		/// @note Cleans up all resources including synchronization primitives
 		~WaitableQueue() = default;
 
-		/**
-		 * @brief Push item at the end of the internal queue and signals waiting clients.
-		 * 
-		 * @param value The parameter is moved into the queue. The client must std::move() the item if they wish to transfer ownership.
-		 */
+		/// @brief Adds an item to the end of the queue and signals waiting consumers
+		///
+		/// Moves the item into the queue and signals one waiting consumer thread.
+		/// This is the primary method for producers to add items.
+		///
+		/// @param value The item to add (moved into queue)
+		/// @return void
+		///
+		/// @note Thread-safe: Uses exclusive write lock
+		/// @note FIFO ordering: Item is added to the end of the queue
+		/// @note Signals one waiting consumer via semaphore
+		/// @note Increments the add counter
+		/// @note The input value is moved; original reference becomes invalid
+		///
+		/// @example
+		/// @code
+		/// queue.push(std::string("hello"));
+		/// queue.push(std::move(myString));
+		/// @endcode
 		void push(StorageType&& value)
 		{
 			if (RWLock _ {_containerMutex}; true)
 			{
 				_counterAdds++;
-				_container.push(std::move(value));
+				_container.push_back(std::move(value));
 			}
 			// Must be outside the lock!
 			_signal.release();
 		}
 
-		/**
-		 * @brief Calls the underlying emplace method to the queue within a lock.
-		 * 
-		 * @param value The parameter is moved into the emplace method on the queue
-		 */
+		/// @brief Constructs and adds an item to the end of the queue in-place
+		///
+		/// Constructs the item directly in the queue using emplace semantics.
+		/// More efficient than push() when you want to construct the item in-place.
+		///
+		/// @param value The item to construct and add (moved into queue)
+		/// @return void
+		///
+		/// @note Thread-safe: Uses exclusive write lock
+		/// @note FIFO ordering: Item is added to the end of the queue
+		/// @note Signals one waiting consumer via semaphore
+		/// @note Increments the add counter
+		/// @note More efficient than push() for complex types
+		///
+		/// @example
+		/// @code
+		/// queue.emplace(std::string("hello"));
+		/// queue.emplace(MyType{42, "value"});
+		/// @endcode
 		void emplace(StorageType&& value)
 		{
 			if (RWLock _ {_containerMutex}; true)
 			{
 				_counterAdds++;
-				_container.emplace(std::move(value));
+				_container.emplace_back(std::move(value));
 			}
 			// Must be outside the lock!
 			_signal.release();
 		}
 
-		/**
-		 * @brief Spins until the specified timeout to allow the outbound queue to be emptied.
-         *        Use this call only when you're about to end use of the object and want the queue
-         *        to be processed (without leaving unprocessed items).
-		 * 
-		 * @param timeoutDuration Timeout in milliseconds; defaults to 1500ms.
-		 * @return std::optional<size_t> 
-		 */
+		/// @brief Waits until the queue is empty or timeout occurs
+		///
+		/// Spins (with increasing sleep intervals) until the queue is empty or the timeout expires.
+		/// Useful for graceful shutdown scenarios where you want to ensure all items are processed.
+		///
+		/// @param timeoutDuration Maximum time to wait (defaults to 1500ms)
+		/// @return std::optional<size_t> The final queue size (0 if empty, >0 if timeout)
+		///
+		/// @note Thread-safe: Uses shared read lock for size checks
+		/// @note Blocking: Sleeps in a loop with increasing intervals (32ms, 64ms, 96ms, ...)
+		/// @note Returns immediately if queue is already empty
+		/// @note Useful for shutdown: wait for queue to drain before destroying
+		///
+		/// @example
+		/// @code
+		/// // Signal producers to stop
+		/// // Wait for queue to drain
+		/// auto finalSize = queue.waitUntilEmpty(std::chrono::milliseconds(2000));
+		/// if (finalSize && *finalSize == 0) {
+		///     std::cout << "Queue is empty" << std::endl;
+		/// } else {
+		///     std::cout << "Timeout with " << *finalSize << " items remaining" << std::endl;
+		/// }
+		/// @endcode
 		auto waitUntilEmpty(std::chrono::milliseconds timeoutDuration = std::chrono::milliseconds(1500)) -> std::optional<size_t>
 		{
 			constexpr std::chrono::milliseconds spinInterval {32};
@@ -155,13 +241,34 @@ namespace siddiqsoft
 			return size();
 		}
 
-
-		/**
-        * @brief Returns an item immediately otherwise waits for the minimum specified interval in milliseconds for an item to become available in the internal queue.
-        * 
-        * @param timeoutDuration 
-        * @return std::optional<StorageType> 
-        */
+		/// @brief Waits for an item with timeout and returns it if available
+		///
+		/// Waits for the specified timeout for an item to become available in the queue.
+		/// Returns immediately if an item is available, or returns empty optional if timeout occurs.
+		/// This is the primary method for consumers to retrieve items.
+		///
+		/// @param timeoutDuration Maximum time to wait (defaults to 100ms)
+		/// @return std::optional<StorageType> The dequeued item, or empty if timeout
+		///
+		/// @note Thread-safe: Uses exclusive write lock for item removal
+		/// @note FIFO ordering: Returns items in the order they were added
+		/// @note Efficient waiting: Uses std::counting_semaphore for efficient signaling
+		/// @note Increments the remove counter on successful retrieval
+		/// @note [[nodiscard]] attribute encourages checking the return value
+		/// @note Multiple consumers can wait concurrently; only one gets each item
+		///
+		/// @example
+		/// @code
+		/// while (true) {
+		///     auto item = queue.tryWaitItem(std::chrono::milliseconds(500));
+		///     if (item) {
+		///         std::cout << "Got: " << *item << std::endl;
+		///     } else {
+		///         std::cout << "Timeout" << std::endl;
+		///         break;
+		///     }
+		/// }
+		/// @endcode
 		[[nodiscard]] auto tryWaitItem(std::chrono::milliseconds timeoutDuration = std::chrono::milliseconds(100))
 				-> std::optional<StorageType>
 		{
@@ -178,7 +285,7 @@ namespace siddiqsoft
 					// Using this scope guard allows us to minimize object movement
 					siddiqsoft::RunOnEnd scopeCleanup {[&]()
 					                                   {
-														   _container.pop();
+														   _container.pop_front();
 														   _counterRemoves++;
 													   }};
 					// Return the object via move since it will be popped by the scope guard
@@ -190,11 +297,21 @@ namespace siddiqsoft
 			return {};
 		}
 
-		/**
-         * @brief Returns the number of elements in the queue.
-         * 
-         * @return auto 
-         */
+		/// @brief Returns the current number of items in the queue
+		///
+		/// Gets the current size of the queue. This is a read-only operation.
+		///
+		/// @return size_t The number of items currently in the queue
+		///
+		/// @note Thread-safe: Uses shared read lock
+		/// @note O(1) operation
+		/// @note Multiple threads can call size() simultaneously
+		/// @note Size can change immediately after return due to concurrent operations
+		///
+		/// @example
+		/// @code
+		/// std::cout << "Queue has " << queue.size() << " items" << std::endl;
+		/// @endcode
 		auto size() const -> size_t const
 		{
 			RLock _ {_containerMutex};
@@ -202,41 +319,89 @@ namespace siddiqsoft
 			return _container.size();
 		}
 
-		/**
-		 * @brief Returns the number of elements added thus far into the internal queue.
-		 * 
-		 * @return uint64_t 
-		 */
+		/// @brief Returns the total number of items added to the queue
+		///
+		/// Gets the cumulative count of all items that have been added via push() or emplace().
+		/// This counter never decreases and provides a measure of total throughput.
+		///
+		/// @return uint64_t The total number of add operations
+		///
+		/// @note Thread-safe: Uses atomic operation
+		/// @note Cumulative: Never decreases, only increases
+		/// @note Useful for diagnostics and performance monitoring
+		///
+		/// @example
+		/// @code
+		/// std::cout << "Total added: " << queue.addCounter() << std::endl;
+		/// @endcode
 		auto addCounter() -> uint64_t { return _counterAdds; }
 
-
-		/**
-		 * @brief Returns the number of times tryWaitItem resulted in a successful item retrieval.
-		 * 
-		 * @return uint64_t 
-		 */
+		/// @brief Returns the total number of items successfully retrieved from the queue
+		///
+		/// Gets the cumulative count of all items that have been successfully retrieved via tryWaitItem().
+		/// This counter never decreases and provides a measure of consumption rate.
+		///
+		/// @return uint64_t The total number of successful remove operations
+		///
+		/// @note Thread-safe: Uses atomic operation
+		/// @note Cumulative: Never decreases, only increases
+		/// @note Useful for diagnostics and performance monitoring
+		/// @note Should eventually equal addCounter() when queue is fully drained
+		///
+		/// @example
+		/// @code
+		/// std::cout << "Total removed: " << queue.removeCounter() << std::endl;
+		/// @endcode
 		auto removeCounter() -> uint64_t { return _counterRemoves; }
 
 #ifdef INCLUDE_NLOHMANN_JSON_HPP_
 	public:
-		// If the JSON library is included in the current project, then make the serializer available.
+		/// @brief Serializes queue metadata to JSON
+		///
+		/// Returns a JSON object containing queue statistics.
+		/// Only available if nlohmann/json.hpp is included before this header.
+		///
+		/// @return nlohmann::json JSON object with:
+		///   - _typver: Type and version string
+		///   - adds: Total number of add operations
+		///   - removes: Total number of remove operations
+		///   - size: Current number of items
+		///
+		/// @note Thread-safe: Uses atomic operations and shared read lock
+		/// @note Requires INCLUDE_NLOHMANN_JSON_HPP_ to be defined
+		///
+		/// @example
+		/// @code
+		/// #include "nlohmann/json.hpp"
+		/// auto json = queue.toJson();
+		/// std::cout << json.dump(2) << std::endl;
+		/// @endcode
 		nlohmann::json toJson()
 		{
 			return nlohmann::json {
-					{"_typver", "WaitableQueue/1.0.0"}, {"adds", _counterAdds}, {"removes", _counterRemoves}, {"size", size()}};
+					{"_typver", "WaitableQueue/1.5.0"}, {"adds", addCounter()}, {"removes", removeCounter()}, {"size", size()}};
 		}
 #endif
 
 	private:
-		/// @brief Semaphore with default max signals.
+		/// @brief Semaphore for efficient producer-consumer signaling
+		/// @note Initialized with 0 signals; incremented by push/emplace, decremented by tryWaitItem
 		std::counting_semaphore<> _signal {0};
-		/// @brief The container (defaults to std::queue)
-		StorageContainer _container;
-		/// @brief The shared mutex used to perform reader-writer lock
+
+		/// @brief The underlying container (deque for efficient front/back operations)
+		/// @note Stores items in FIFO order
+		std::deque<StorageType> _container {};
+
+		/// @brief Shared mutex for reader-writer locking
+		/// @note Mutable to allow const methods to acquire read locks
 		mutable std::shared_mutex _containerMutex;
-		/// @brief Tracks the total number of adds to the container
+
+		/// @brief Atomic counter for total add operations
+		/// @note Incremented by push/emplace, never decreases
 		std::atomic_uint64_t _counterAdds {0};
-		/// @brief Tracks the total number of removes from the container
+
+		/// @brief Atomic counter for total remove operations
+		/// @note Incremented by successful tryWaitItem, never decreases
 		std::atomic_uint64_t _counterRemoves {0};
 	};
 } // namespace siddiqsoft
