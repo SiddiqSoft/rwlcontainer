@@ -28,38 +28,55 @@
         header {
             background: white;
             border-radius: 8px;
-            padding: 25px 30px;
+            padding: 15px 30px;
             margin-bottom: 20px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            text-align: center;
+        }
+        
+        .header-top {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 12px;
+        }
+        
+        .logo {
+            max-width: 60px;
+            height: auto;
+            flex-shrink: 0;
+        }
+        
+        .header-title {
+            flex: 1;
+            text-align: left;
         }
         
         header h1 {
             color: #667eea;
-            font-size: 2em;
-            margin-bottom: 5px;
+            font-size: 1.8em;
+            margin-bottom: 2px;
         }
         
         header p {
             color: #666;
-            font-size: 0.95em;
-            margin-bottom: 12px;
+            font-size: 0.9em;
+            margin: 0;
         }
         
         .badges {
             display: flex;
-            justify-content: center;
+            justify-content: flex-start;
             gap: 8px;
             flex-wrap: wrap;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
         
         .badge {
             display: inline-block;
-            padding: 4px 10px;
+            padding: 3px 8px;
             background: #f0f0f0;
             border-radius: 20px;
-            font-size: 0.8em;
+            font-size: 0.75em;
             color: #333;
         }
         
@@ -80,45 +97,43 @@
         
         .header-features {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 8px;
-            margin-bottom: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 6px;
+            margin-bottom: 10px;
         }
         
         .header-feature {
             background: #f0f0f0;
-            padding: 8px 10px;
+            padding: 6px 8px;
             border-radius: 5px;
             text-align: center;
             color: #333;
-            font-size: 0.75em;
+            font-size: 0.7em;
         }
         
         .header-feature strong {
             color: #667eea;
             display: block;
-            margin-bottom: 2px;
-            font-size: 0.9em;
+            margin-bottom: 1px;
+            font-size: 0.85em;
         }
         
         .cta-buttons {
             display: flex;
-            gap: 10px;
-            justify-content: center;
+            gap: 8px;
             flex-wrap: wrap;
-            margin-top: 15px;
         }
         
         .btn {
             display: inline-block;
-            padding: 10px 24px;
+            padding: 8px 16px;
             border-radius: 5px;
             text-decoration: none;
             font-weight: 600;
             transition: all 0.3s ease;
             border: none;
             cursor: pointer;
-            font-size: 0.9em;
+            font-size: 0.85em;
         }
         
         .btn-primary {
@@ -241,6 +256,23 @@
             font-size: 0.9em;
         }
         
+        .method-list li a {
+            color: #666;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .method-list li a:hover {
+            color: #667eea;
+        }
+        
+        .method-list li a code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        
         .doc-link {
             display: inline-block;
             margin-top: 15px;
@@ -308,8 +340,17 @@
                 grid-template-columns: 1fr;
             }
             
+            .header-top {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .header-title {
+                text-align: left;
+            }
+            
             header h1 {
-                font-size: 1.6em;
+                font-size: 1.5em;
             }
             
             .cta-buttons {
@@ -330,8 +371,13 @@
 <body>
     <div class="container">
         <header>
-            <h1>🔒 RWLContainer</h1>
-            <p>Production-Ready Thread-Safe C++20 Containers</p>
+            <div class="header-top">
+                <img src="logo.png" alt="Siddiq Software Logo" class="logo">
+                <div class="header-title">
+                    <h1>🔒 RWLContainer</h1>
+                    <p>Thread-Safe C++20 Containers</p>
+                </div>
+            </div>
             
             <div class="badges">
                 <span class="badge cpp">C++20</span>
@@ -396,14 +442,14 @@
                     
                     <strong>Methods:</strong>
                     <ul class="method-list">
-                        <li><code>add(key, value)</code> - Add by value</li>
-                        <li><code>add(key, shared_ptr)</code> - Add by pointer</li>
-                        <li><code>add(key, callback)</code> - Add via callback</li>
-                        <li><code>remove(key)</code> - Remove and return</li>
-                        <li><code>find(key)</code> - Find without removing</li>
-                        <li><code>size()</code> - Get element count</li>
-                        <li><code>scan(callback)</code> - Iterate and find</li>
-                        <li><code>toJson()</code> - Serialize metadata</li>
+                        <li><a href="api/RWLContainer.html#addkey-value"><code>add(key, value)</code></a> - Add by value</li>
+                        <li><a href="api/RWLContainer.html#addkey-shared_ptr"><code>add(key, shared_ptr)</code></a> - Add by pointer</li>
+                        <li><a href="api/RWLContainer.html#addkey-callback"><code>add(key, callback)</code></a> - Add via callback</li>
+                        <li><a href="api/RWLContainer.html#removekey"><code>remove(key)</code></a> - Remove and return</li>
+                        <li><a href="api/RWLContainer.html#findkey"><code>find(key)</code></a> - Find without removing</li>
+                        <li><a href="api/RWLContainer.html#size"><code>size()</code></a> - Get element count</li>
+                        <li><a href="api/RWLContainer.html#scancallback"><code>scan(callback)</code></a> - Iterate and find</li>
+                        <li><a href="api/RWLContainer.html#tojson"><code>toJson()</code></a> - Serialize metadata</li>
                     </ul>
                     
                     <a href="api/RWLContainer.html" class="doc-link">📖 Full API Reference</a>
@@ -430,14 +476,14 @@
                     
                     <strong>Methods:</strong>
                     <ul class="method-list">
-                        <li><code>push(value)</code> - Add to queue</li>
-                        <li><code>emplace(value)</code> - Construct in-place</li>
-                        <li><code>tryWaitItem(timeout)</code> - Wait for item</li>
-                        <li><code>waitUntilEmpty(timeout)</code> - Wait until empty</li>
-                        <li><code>size()</code> - Get queue size</li>
-                        <li><code>addCounter()</code> - Total adds</li>
-                        <li><code>removeCounter()</code> - Total removes</li>
-                        <li><code>toJson()</code> - Serialize metadata</li>
+                        <li><a href="api/WaitableQueue.html#pushvalue"><code>push(value)</code></a> - Add to queue</li>
+                        <li><a href="api/WaitableQueue.html#emplacevalue"><code>emplace(value)</code></a> - Construct in-place</li>
+                        <li><a href="api/WaitableQueue.html#trywaititemtimeout"><code>tryWaitItem(timeout)</code></a> - Wait for item</li>
+                        <li><a href="api/WaitableQueue.html#waituntilemptytimeout"><code>waitUntilEmpty(timeout)</code></a> - Wait until empty</li>
+                        <li><a href="api/WaitableQueue.html#size"><code>size()</code></a> - Get queue size</li>
+                        <li><a href="api/WaitableQueue.html#addcounter"><code>addCounter()</code></a> - Total adds</li>
+                        <li><a href="api/WaitableQueue.html#removecounter"><code>removeCounter()</code></a> - Total removes</li>
+                        <li><a href="api/WaitableQueue.html#tojson"><code>toJson()</code></a> - Serialize metadata</li>
                     </ul>
                     
                     <a href="api/WaitableQueue.html" class="doc-link">📖 Full API Reference</a>
