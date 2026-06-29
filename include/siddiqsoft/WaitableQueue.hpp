@@ -334,7 +334,7 @@ namespace siddiqsoft
 		/// @code
 		/// std::cout << "Total added: " << queue.addCounter() << std::endl;
 		/// @endcode
-		auto addCounter() -> uint64_t { return _counterAdds; }
+		auto addCounter() const -> uint64_t const { return _counterAdds; }
 
 		/// @brief Returns the total number of items successfully retrieved from the queue
 		///
@@ -352,7 +352,7 @@ namespace siddiqsoft
 		/// @code
 		/// std::cout << "Total removed: " << queue.removeCounter() << std::endl;
 		/// @endcode
-		auto removeCounter() -> uint64_t { return _counterRemoves; }
+		auto removeCounter() const -> uint64_t const { return _counterRemoves; }
 
 #ifdef INCLUDE_NLOHMANN_JSON_HPP_
 	public:
@@ -376,10 +376,10 @@ namespace siddiqsoft
 		/// auto json = queue.toJson();
 		/// std::cout << json.dump(2) << std::endl;
 		/// @endcode
-		nlohmann::json toJson()
+		nlohmann::json toJson() const
 		{
 			return nlohmann::json {
-					{"_typver", "WaitableQueue/1.5.0"}, {"adds", addCounter()}, {"removes", removeCounter()}, {"size", size()}};
+					{"_typver", "WaitableQueue/1.5.3"}, {"adds", addCounter()}, {"removes", removeCounter()}, {"size", size()}};
 		}
 #endif
 

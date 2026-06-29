@@ -191,7 +191,7 @@ if (item) {
 
 ### size()
 
-Returns the number of elements in the container.
+Returns the number of elements in the container (const-qualified).
 
 ```cpp
 size_t size() const
@@ -238,22 +238,22 @@ auto item = cache.scan([](const auto& key, auto& value) {
 
 ### toJson()
 
-Serializes container metadata to JSON.
+Serializes container metadata to JSON (const-qualified, returns const value).
 
 ```cpp
-nlohmann::json toJson()
+auto toJson() const -> nlohmann::json const
 ```
 
 **Returns:** JSON object with container statistics
 
-**Thread Safety:** Shared read lock
+**Thread Safety:** Shared read lock | **Signature:** `auto toJson() const -> nlohmann::json const`
 
 **Requirements:** `nlohmann/json.hpp` must be included before this header
 
 **JSON Structure:**
 ```json
 {
-  "_typver": "RWLContainer/1.5.0",
+  "_typver": "RWLContainer/1.5.3",
   "adds": 42,
   "removes": 10,
   "ReplaceExisting": false,
@@ -328,5 +328,5 @@ auto newItem = cache.add("key", "new_value");
 
 ---
 
-**Version:** 1.5.0  
+**Version:** 1.5.3  
 **Last Updated:** 2024

@@ -296,7 +296,7 @@ namespace siddiqsoft
 		/// @code
 		/// std::cout << "Container has " << container.size() << " items" << std::endl;
 		/// @endcode
-		auto size() const -> size_t
+		auto size() const -> size_t const
 		{
 			std::shared_lock<std::shared_mutex> myReaderLock(_containerMutex);
 
@@ -359,9 +359,9 @@ namespace siddiqsoft
 		/// auto json = container.toJson();
 		/// std::cout << json.dump(2) << std::endl;
 		/// @endcode
-		nlohmann::json toJson()
+		auto toJson() const -> nlohmann::json const
 		{
-			return nlohmann::json {{"_typver", "RWLContainer/1.5.0"},
+			return nlohmann::json {{"_typver", "RWLContainer/1.5.3"},
 			                       {"adds", _counterAdds.load()},
 			                       {"removes", _counterRemoves.load()},
 			                       {"ReplaceExisting", ReplaceExisting},

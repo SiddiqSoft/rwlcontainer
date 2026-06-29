@@ -150,7 +150,7 @@ if (finalSize && *finalSize == 0) {
 
 ### size()
 
-Returns the current number of items in the queue.
+Returns the current number of items in the queue (const-qualified).
 
 ```cpp
 size_t size() const
@@ -173,10 +173,10 @@ std::cout << "Queue has " << queue.size() << " items" << std::endl;
 
 ### addCounter()
 
-Returns the total number of items added to the queue.
+Returns the total number of items added to the queue (const-qualified, returns const value).
 
 ```cpp
-uint64_t addCounter()
+auto addCounter() const -> uint64_t const
 ```
 
 **Returns:** The cumulative count of all items added via `push()` or `emplace()`
@@ -184,6 +184,8 @@ uint64_t addCounter()
 **Thread Safety:** Atomic operation
 
 **Note:** This counter never decreases and provides a measure of total throughput.
+
+**Signature:** `auto addCounter() const -> uint64_t const`
 
 **Example:**
 ```cpp
@@ -194,10 +196,10 @@ std::cout << "Total added: " << queue.addCounter() << std::endl;
 
 ### removeCounter()
 
-Returns the total number of items successfully retrieved from the queue.
+Returns the total number of items successfully retrieved from the queue (const-qualified, returns const value).
 
 ```cpp
-uint64_t removeCounter()
+auto removeCounter() const -> uint64_t const
 ```
 
 **Returns:** The cumulative count of all items successfully retrieved via `tryWaitItem()`
@@ -205,6 +207,8 @@ uint64_t removeCounter()
 **Thread Safety:** Atomic operation
 
 **Note:** This counter never decreases. Should eventually equal `addCounter()` when queue is fully drained.
+
+**Signature:** `auto removeCounter() const -> uint64_t const`
 
 **Example:**
 ```cpp
@@ -215,22 +219,22 @@ std::cout << "Total removed: " << queue.removeCounter() << std::endl;
 
 ### toJson()
 
-Serializes queue metadata to JSON.
+Serializes queue metadata to JSON (const-qualified).
 
 ```cpp
-nlohmann::json toJson()
+nlohmann::json toJson() const
 ```
 
 **Returns:** JSON object with queue statistics
 
-**Thread Safety:** Atomic operations and shared read lock
+**Thread Safety:** Atomic operations and shared read lock | **Signature:** `nlohmann::json toJson() const`
 
 **Requirements:** `nlohmann/json.hpp` must be included before this header
 
 **JSON Structure:**
 ```json
 {
-  "_typver": "WaitableQueue/1.5.0",
+  "_typver": "WaitableQueue/1.5.3",
   "adds": 100,
   "removes": 95,
   "size": 5
@@ -382,5 +386,5 @@ std::cout << "Pending: " << queue.size() << std::endl;
 
 ---
 
-**Version:** 1.5.0  
+**Version:** 1.5.3  
 **Last Updated:** 2024

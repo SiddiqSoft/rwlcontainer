@@ -17,7 +17,7 @@ Add to your `CMakeLists.txt`:
 ```cmake
 include(cmake/CPM.cmake)
 
-CPMAddPackage("gh:SiddiqSoft/RWLContainer@1.5.0")
+CPMAddPackage("gh:SiddiqSoft/RWLContainer@1.5.3")
 
 target_link_libraries(myapp PRIVATE SiddiqSoft::RWLContainer)
 ```
@@ -233,5 +233,5 @@ if (auto val = cache.find("key")) {
 
 ---
 
-**Version:** 1.5.0  
+**Version:** 1.5.3  
 **Last Updated:** 2024

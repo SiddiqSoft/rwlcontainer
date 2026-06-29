@@ -18,7 +18,7 @@ RWLContainer offers two main classes for concurrent programming:
 nuget install SiddiqSoft.RWLContainer
 
 # Using CPM (CMake)
-CPMAddPackage("gh:SiddiqSoft/RWLContainer@1.5.0")
+CPMAddPackage("gh:SiddiqSoft/RWLContainer@1.5.3")
 ```
 
 ### Basic Usage
@@ -103,6 +103,6 @@ BSD 3-Clause License - See LICENSE file for details
 
 ---
 
-**Version:** 1.5.0  
+**Version:** 1.5.3  
 **Last Updated:** 2024  
 **Maintainer:** Siddiq Software LLC

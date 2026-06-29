@@ -29,7 +29,7 @@ All platforms are tested in the CI/CD pipeline.
 
 **A:** 
 - **NuGet (Windows):** `nuget install SiddiqSoft.RWLContainer`
-- **CPM (CMake):** `CPMAddPackage("gh:SiddiqSoft/RWLContainer@1.5.0")`
+- **CPM (CMake):** `CPMAddPackage("gh:SiddiqSoft/RWLContainer@1.5.3")`
 - **Manual:** Include the header files from `include/siddiqsoft/`
 
 ---
@@ -358,7 +358,7 @@ auto json = cache.toJson();
 **A:** Using CPM:
 
 ```cmake
-CPMAddPackage("gh:SiddiqSoft/RWLContainer@1.5.0")
+CPMAddPackage("gh:SiddiqSoft/RWLContainer@1.5.3")
 target_link_libraries(myapp PRIVATE SiddiqSoft::RWLContainer)
 ```
 
@@ -370,5 +370,5 @@ target_include_directories(myapp PRIVATE /path/to/rwlcontainer/include)
 
 ---
 
-**Version:** 1.5.0  
+**Version:** 1.5.3  
 **Last Updated:** 2024

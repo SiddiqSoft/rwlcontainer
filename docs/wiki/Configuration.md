@@ -326,5 +326,5 @@ while (auto item = queue.tryWaitItem(std::chrono::milliseconds(100))) {
 
 ---
 
-**Version:** 1.5.0  
+**Version:** 1.5.3  
 **Last Updated:** 2024
