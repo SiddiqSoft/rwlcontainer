@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WaitableQueue API Reference</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.2.0/github-markdown.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/styles/github.min.css">
+    <style>
+        body {
+            background: #f6f8fa;
+            padding: 20px;
+        }
+        .markdown-body {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .back-link:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 15px 0;
+        }
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        table th {
+            background: #f6f8fa;
+            font-weight: 600;
+        }
+        code {
+            background: #f6f8fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        pre {
+            background: #f6f8fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="markdown-body">
+        <a href="../index.html" class="back-link">← Back to Home</a>
+        
+        <h1>WaitableQueue API Reference</h1>
+        
+        <p>A thread-safe queue with timeout-based waiting for producer-consumer patterns.</p>
+        
+        <h2>Overview</h2>
+        
+        <p><code>WaitableQueue</code> is a template class that implements a high-performance queue designed for multi-threaded producer-consumer scenarios. It combines <code>std::deque</code> with <code>std::shared_mutex</code> and <code>std::counting_semaphore</code> for efficient concurrent access.</p>
+        
+        <pre><code class="language-cpp">template &lt;class StorageType&gt;
+    requires Movable&lt;StorageType&gt;
+class WaitableQueue
+</code></pre>
+        
+        <h2>Template Parameters</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Description</th>
+                    <th>Constraints</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>StorageType</code></td>
+                    <td>The type of items to store in the queue</td>
+                    <td>Must be move-constructible and move-assignable</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h2>Key Characteristics</h2>
+        
+        <ul>
+            <li><strong>FIFO Ordering</strong> - Items are retrieved in the order they were added</li>
+            <li><strong>Non-Copyable</strong> - Cannot be copied due to synchronization primitives</li>
+            <li><strong>Non-Movable</strong> - Cannot be moved due to synchronization primitives</li>
+            <li><strong>Efficient Waiting</strong> - Uses <code>std::counting_semaphore</code> for efficient producer-consumer signaling</li>
+            <li><strong>Timeout Support</strong> - All wait operations support configurable timeouts</li>
+        </ul>
+        
+        <h2>Methods</h2>
+        
+        <h3>push(value)</h3>
+        
+        <p>Adds an item to the end of the queue and signals waiting consumers.</p>
+        
+        <pre><code class="language-cpp">void push(StorageType&amp;&amp; value)
+</code></pre>
+        
+        <p><strong>Parameters:</strong></p>
+        <ul>
+            <li><code>value</code> - The item to add (moved into queue)</li>
+        </ul>
+        
+        <p><strong>Returns:</strong> <code>void</code></p>
+        
+        <p><strong>Thread Safety:</strong> Exclusive write lock</p>
+        
+        <p><strong>Note:</strong> The input value is moved; the original reference becomes invalid.</p>
+        
+        <p><strong>Example:</strong></p>
+        <pre><code class="language-cpp">siddiqsoft::WaitableQueue&lt;std::string&gt; queue;
+queue.push("hello");
+queue.push(std::move(myString));
+</code></pre>
+        
+        <hr>
+        
+        <h3>emplace(value)</h3>
+        
+        <p>Constructs and adds an item to the end of the queue in-place.</p>
+        
+        <pre><code class="language-cpp">void emplace(StorageType&amp;&amp; value)
+</code></pre>
+        
+        <p><strong>Parameters:</strong></p>
+        <ul>
+            <li><code>value</code> - The item to construct and add (moved into queue)</li>
+        </ul>
+        
+        <p><strong>Returns:</strong> <code>void</code></p>
+        
+        <p><strong>Thread Safety:</strong> Exclusive write lock</p>
+        
+        <p><strong>Note:</strong> More efficient than <code>push()</code> when you want to construct the item in-place.</p>
+        
+        <p><strong>Example:</strong></p>
+        <pre><code class="language-cpp">queue.emplace("hello");
+queue.emplace(MyType{42, "value"});
+</code></pre>
+        
+        <hr>
+        
+        <h3>tryWaitItem(timeout)</h3>
+        
+        <p>Waits for an item with timeout and returns it if available.</p>
+        
+        <pre><code class="language-cpp">[[nodiscard]] std::optional&lt;StorageType&gt; tryWaitItem(
+    std::chrono::milliseconds timeoutDuration = std::chrono::milliseconds(100))
+</code></pre>
+        
+        <p><strong>Parameters:</strong></p>
+        <ul>
+            <li><code>timeoutDuration</code> - Maximum time to wait (default: 100ms)</li>
+        </ul>
+        
+        <p><strong>Returns:</strong> <code>std::optional&lt;StorageType&gt;</code> containing the dequeued item, or empty if timeout</p>
+        
+        <p><strong>Thread Safety:</strong> Exclusive write lock for item removal</p>
+        
+        <p><strong>FIFO Ordering:</strong> Returns items in the order they were added</p>
+        
+        <p><strong>Note:</strong> Multiple consumers can wait concurrently; only one gets each item.</p>
+        
+        <p><strong>Example:</strong></p>
+        <pre><code class="language-cpp">while (true) {
+    auto item = queue.tryWaitItem(std::chrono::milliseconds(500));
+    if (item) {
+        std::cout &lt;&lt; "Got: " &lt;&lt; *item &lt;&lt; std::endl;
+    } else {
+        std::cout &lt;&lt; "Timeout" &lt;&lt; std::endl;
+        break;
+    }
+}
+</code></pre>
+        
+        <hr>
+        
+        <h3>waitUntilEmpty(timeout)</h3>
+        
+        <p>Waits until the queue is empty or timeout occurs.</p>
+        
+        <pre><code class="language-cpp">std::optional&lt;size_t&gt; waitUntilEmpty(
+    std::chrono::milliseconds timeoutDuration = std::chrono::milliseconds(1500))
+</code></pre>
+        
+        <p><strong>Parameters:</strong></p>
+        <ul>
+            <li><code>timeoutDuration</code> - Maximum time to wait (default: 1500ms)</li>
+        </ul>
+        
+        <p><strong>Returns:</strong> <code>std::optional&lt;size_t&gt;</code> containing the final queue size (0 if empty, &gt;0 if timeout)</p>
+        
+        <p><strong>Thread Safety:</strong> Shared read lock for size checks</p>
+        
+        <p><strong>Note:</strong> Spins with increasing sleep intervals (32ms, 64ms, 96ms, ...) until queue is empty or timeout.</p>
+        
+        <p><strong>Use Case:</strong> Graceful shutdown scenarios where you want to ensure all items are processed.</p>
+        
+        <p><strong>Example:</strong></p>
+        <pre><code class="language-cpp">// Signal producers to stop
+// Wait for queue to drain
+auto finalSize = queue.waitUntilEmpty(std::chrono::milliseconds(2000));
+if (finalSize &amp;&amp; *finalSize == 0) {
+    std::cout &lt;&lt; "Queue is empty" &lt;&lt; std::endl;
+} else {
+    std::cout &lt;&lt; "Timeout with " &lt;&lt; *finalSize &lt;&lt; " items remaining" &lt;&lt; std::endl;
+}
+</code></pre>
+        
+        <hr>
+        
+        <h3>size()</h3>
+        
+        <p>Returns the current number of items in the queue.</p>
+        
+        <pre><code class="language-cpp">size_t size() const
+</code></pre>
+        
+        <p><strong>Returns:</strong> The number of items currently in the queue</p>
+        
+        <p><strong>Thread Safety:</strong> Shared read lock</p>
+        
+        <p><strong>Complexity:</strong> O(1)</p>
+        
+        <p><strong>Note:</strong> Size can change immediately after return due to concurrent operations.</p>
+        
+        <p><strong>Example:</strong></p>
+        <pre><code class="language-cpp">std::cout &lt;&lt; "Queue has " &lt;&lt; queue.size() &lt;&lt; " items" &lt;&lt; std::endl;
+</code></pre>
+        
+        <hr>
+        
+        <h3>addCounter()</h3>
+        
+        <p>Returns the total number of items added to the queue.</p>
+        
+        <pre><code class="language-cpp">uint64_t addCounter()
+</code></pre>
+        
+        <p><strong>Returns:</strong> The cumulative count of all items added via <code>push()</code> or <code>emplace()</code></p>
+        
+        <p><strong>Thread Safety:</strong> Atomic operation</p>
+        
+        <p><strong>Note:</strong> This counter never decreases and provides a measure of total throughput.</p>
+        
+        <p><strong>Example:</strong></p>
+        <pre><code class="language-cpp">std::cout &lt;&lt; "Total added: " &lt;&lt; queue.addCounter() &lt;&lt; std::endl;
+</code></pre>
+        
+        <hr>
+        
+        <h3>removeCounter()</h3>
+        
+        <p>Returns the total number of items successfully retrieved from the queue.</p>
+        
+        <pre><code class="language-cpp">uint64_t removeCounter()
+</code></pre>
+        
+        <p><strong>Returns:</strong> The cumulative count of all items successfully retrieved via <code>tryWaitItem()</code></p>
+        
+        <p><strong>Thread Safety:</strong> Atomic operation</p>
+        
+        <p><strong>Note:</strong> This counter never decreases. Should eventually equal <code>addCounter()</code> when queue is fully drained.</p>
+        
+        <p><strong>Example:</strong></p>
+        <pre><code class="language-cpp">std::cout &lt;&lt; "Total removed: " &lt;&lt; queue.removeCounter() &lt;&lt; std::endl;
+</code></pre>
+        
+        <hr>
+        
+        <h3>toJson()</h3>
+        
+        <p>Serializes queue metadata to JSON.</p>
+        
+        <pre><code class="language-cpp">nlohmann::json toJson()
+</code></pre>
+        
+        <p><strong>Returns:</strong> JSON object with queue statistics</p>
+        
+        <p><strong>Thread Safety:</strong> Atomic operations and shared read lock</p>
+        
+        <p><strong>Requirements:</strong> <code>nlohmann/json.hpp</code> must be included before this header</p>
+        
+        <p><strong>JSON Structure:</strong></p>
+        <pre><code class="language-json">{
+  "_typver": "WaitableQueue/1.5.0",
+  "adds": 100,
+  "removes": 95,
+  "size": 5
+}
+</code></pre>
+        
+        <p><strong>Example:</strong></p>
+        <pre><code class="language-cpp">#include "nlohmann/json.hpp"
+auto json = queue.toJson();
+std::cout &lt;&lt; json.dump(2) &lt;&lt; std::endl;
+</code></pre>
+        
+        <hr>
+        
+        <h2>Deleted Operations</h2>
+        
+        <p>The following operations are explicitly deleted to prevent misuse:</p>
+        
+        <pre><code class="language-cpp">WaitableQueue(const WaitableQueue&amp;) = delete;           // Copy constructor
+WaitableQueue&amp; operator=(const WaitableQueue&amp;) = delete; // Copy assignment
+WaitableQueue(WaitableQueue&amp;&amp;) = delete;                 // Move constructor
+WaitableQueue&amp; operator=(WaitableQueue&amp;&amp;) = delete;      // Move assignment
+</code></pre>
+        
+        <p><strong>Reason:</strong> Queue contains synchronization primitives (<code>std::shared_mutex</code>, <code>std::counting_semaphore</code>) that cannot be safely copied or moved.</p>
+        
+        <hr>
+        
+        <h2>Thread Safety</h2>
+        
+        <p>All operations in <code>WaitableQueue</code> are thread-safe:</p>
+        
+        <ul>
+            <li><strong>Producer operations</strong> (<code>push</code>, <code>emplace</code>) use exclusive locks</li>
+            <li><strong>Consumer operations</strong> (<code>tryWaitItem</code>) use exclusive locks for item removal</li>
+            <li><strong>Query operations</strong> (<code>size</code>, <code>addCounter</code>, <code>removeCounter</code>) use atomic operations or shared locks</li>
+            <li><strong>Semaphore signaling</strong> ensures efficient producer-consumer coordination</li>
+        </ul>
+        
+        <h2>Performance Characteristics</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Operation</th>
+                    <th>Complexity</th>
+                    <th>Lock Type</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>push()</code></td>
+                    <td>O(1)</td>
+                    <td>Exclusive</td>
+                </tr>
+                <tr>
+                    <td><code>emplace()</code></td>
+                    <td>O(1)</td>
+                    <td>Exclusive</td>
+                </tr>
+                <tr>
+                    <td><code>tryWaitItem()</code></td>
+                    <td>O(1)</td>
+                    <td>Exclusive</td>
+                </tr>
+                <tr>
+                    <td><code>size()</code></td>
+                    <td>O(1)</td>
+                    <td>Shared</td>
+                </tr>
+                <tr>
+                    <td><code>addCounter()</code></td>
+                    <td>O(1)</td>
+                    <td>Atomic</td>
+                </tr>
+                <tr>
+                    <td><code>removeCounter()</code></td>
+                    <td>O(1)</td>
+                    <td>Atomic</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h2>Best Practices</h2>
+        
+        <ol>
+            <li><strong>Use appropriate timeouts</strong> - Balance between responsiveness and CPU usage</li>
+            <li><strong>Handle empty optionals</strong> - Always check if <code>tryWaitItem()</code> returned a value</li>
+            <li><strong>Graceful shutdown</strong> - Use <code>waitUntilEmpty()</code> before destroying the queue</li>
+            <li><strong>Monitor counters</strong> - Use <code>addCounter()</code> and <code>removeCounter()</code> for diagnostics</li>
+            <li><strong>Avoid blocking callbacks</strong> - Keep producer/consumer logic outside the queue</li>
+        </ol>
+        
+        <h2>Common Patterns</h2>
+        
+        <h3>Basic Producer-Consumer</h3>
+        
+        <pre><code class="language-cpp">siddiqsoft::WaitableQueue&lt;std::string&gt; queue;
+
+// Producer thread
+std::thread producer([&amp;]() {
+    for (int i = 0; i &lt; 10; ++i) {
+        queue.push(std::string("item_") + std::to_string(i));
+    }
+});
+
+// Consumer thread
+std::thread consumer([&amp;]() {
+    while (auto item = queue.tryWaitItem(std::chrono::milliseconds(500))) {
+        std::cout &lt;&lt; "Processed: " &lt;&lt; *item &lt;&lt; std::endl;
+    }
+});
+
+producer.join();
+consumer.join();
+</code></pre>
+        
+        <h3>Multiple Consumers</h3>
+        
+        <pre><code class="language-cpp">std::vector&lt;std::thread&gt; consumers;
+for (int i = 0; i &lt; 4; ++i) {
+    consumers.emplace_back([&amp;queue]() {
+        while (auto item = queue.tryWaitItem(std::chrono::milliseconds(500))) {
+            // Process item
+        }
+    });
+}
+
+// Add items from main thread
+for (int i = 0; i &lt; 100; ++i) {
+    queue.push(i);
+}
+
+// Wait for all consumers to finish
+for (auto&amp; t : consumers) {
+    t.join();
+}
+</code></pre>
+        
+        <h3>Graceful Shutdown</h3>
+        
+        <pre><code class="language-cpp">std::atomic&lt;bool&gt; shouldStop {false};
+
+std::thread producer([&amp;]() {
+    while (!shouldStop) {
+        queue.push("item");
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+});
+
+std::thread consumer([&amp;]() {
+    while (auto item = queue.tryWaitItem(std::chrono::milliseconds(500))) {
+        // Process item
+    }
+});
+
+// Signal shutdown
+shouldStop = true;
+producer.join();
+
+// Wait for queue to drain
+queue.waitUntilEmpty(std::chrono::milliseconds(5000));
+consumer.join();
+</code></pre>
+        
+        <h3>Throughput Monitoring</h3>
+        
+        <pre><code class="language-cpp">auto startAdds = queue.addCounter();
+auto startRemoves = queue.removeCounter();
+
+std::this_thread::sleep_for(std::chrono::seconds(1));
+
+auto endAdds = queue.addCounter();
+auto endRemoves = queue.removeCounter();
+
+std::cout &lt;&lt; "Adds/sec: " &lt;&lt; (endAdds - startAdds) &lt;&lt; std::endl;
+std::cout &lt;&lt; "Removes/sec: " &lt;&lt; (endRemoves - startRemoves) &lt;&lt; std::endl;
+std::cout &lt;&lt; "Pending: " &lt;&lt; queue.size() &lt;&lt; std::endl;
+</code></pre>
+        
+        <hr>
+        
+        <p><strong>Version:</strong> 1.5.0<br>
+        <strong>Last Updated:</strong> 2024</p>
+        
+        <a href="../index.html" class="back-link">← Back to Home</a>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/highlight.min.js"></script>
+    <script>
+        hljs.highlightAll();
+    </script>
+</body>
+</html>

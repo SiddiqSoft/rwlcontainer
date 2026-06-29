@@ -7,12 +7,12 @@
 #    - Windows (x64, arm64) with MSVC
 #    - Linux (x64) with Clang and GCC
 # 2. Runs tests on all platforms (configurable)
-# 3. Publishes to NuGet, GitHub, and Wiki (on main/master branches)
+# 3. Publishes to NuGet, GitHub, and GitHub Pages (on main/master branches)
 #
 # Pipeline Stages:
 # 1. Windows - Cleanup, build, and test for Windows with matrix for architecture and compiler
 # 2. Linux - Cleanup, build, and test for Linux with matrix for architecture and compiler
-# 3. Publication - Publishes to NuGet, GitHub, and Wiki
+# 3. Publication - Publishes to NuGet, GitHub, and GitHub Pages
 #
 # Documentation: See PIPELINE_DOCUMENTATION_INDEX.md for detailed information
 # ============================================================================
@@ -105,10 +105,10 @@ parameters:
     default: false
     displayName: "Create GitHub release (auto-enabled on main/master)"
 
-  - name: PublishWiki
+  - name: PublishPages
     type: boolean
     default: false
-    displayName: "Publish wiki to GitHub (auto-enabled on main/master)"
+    displayName: "Publish to GitHub Pages (auto-enabled on main/master)"
 
   # Cleanup
   - name: Cleanup
@@ -124,11 +124,11 @@ variables:
   ${{ if and(eq(parameters.PublishNuGet, false), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))) }}:
     PublishNuGet: true
     PublishGitHub: true
-    PublishWiki: true
+    PublishPages: true
   ${{ else }}:
     PublishNuGet: ${{ parameters.PublishNuGet }}
     PublishGitHub: ${{ parameters.PublishGitHub }}
-    PublishWiki: ${{ parameters.PublishWiki }}
+    PublishPages: ${{ parameters.PublishPages }}
 
   # System information
   AgentOS: $(Agent.OS)
@@ -200,7 +200,7 @@ stages:
     dependsOn:
       - Windows
       - Linux
-    condition: and(or(eq(${{ variables.PublishGitHub }}, true), eq(${{ variables.PublishNuGet }}, true), eq(${{ variables.PublishWiki }}, true)), succeeded())
+    condition: and(or(eq(${{ variables.PublishGitHub }}, true), eq(${{ variables.PublishNuGet }}, true), eq(${{ variables.PublishPages }}, true)), succeeded())
     jobs:
       - ${{ if eq(variables.PublishNuGet, true) }}:
         - template: .azure/az-publish-nuget.yml
@@ -213,3 +213,7 @@ stages:
           displayName: GitHub Release
           PublishGitHub: ${{ variables.PublishGitHub }}
 
+      - template: .azure/az-publish-pages.yml
+        parameters:
+          displayName: GitHub Pages Publication
+          PublishPages: ${{ variables.PublishPages }}

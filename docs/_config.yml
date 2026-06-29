@@ -1,0 +1,52 @@
+# Jekyll configuration for GitHub Pages
+# This file configures how GitHub Pages builds and serves the documentation
+
+# Site settings
+title: RWLContainer
+description: Production-Ready Thread-Safe C++20 Containers
+url: https://siddiqsoft.github.io
+baseurl: /RWLContainer
+
+# Build settings
+markdown: kramdown
+theme: jekyll-theme-minimal
+
+# Exclude files from build
+exclude:
+  - .gitignore
+  - .github
+  - .azure
+  - tests
+  - include
+  - pack
+  - CMakeLists.txt
+  - CMakePresets.json
+  - GitVersion.yml
+  - azure-pipelines.yml
+  - README.md
+  - LICENSE
+
+# Include files in build
+include:
+  - wiki
+
+# Plugins
+plugins:
+  - jekyll-seo-tag
+  - jekyll-feed
+
+# Author information
+author:
+  name: Siddiq Software LLC
+  email: info@siddiqsoft.com
+
+# Social links
+social:
+  github: SiddiqSoft/RWLContainer
+  nuget: SiddiqSoft.RWLContainer
+
+# Collections
+collections:
+  wiki:
+    output: true
+    permalink: /wiki/:path/
