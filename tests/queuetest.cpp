@@ -78,7 +78,7 @@ TEST(WaitableQueueTests, LoadTest_1)
 
 		// Create the workers..
 		std::array<std::jthread, THREAD_COUNT> threadPool {};
-		for (int i = 0; i < THREAD_COUNT; i++)
+		for (uint i = 0; i < THREAD_COUNT; i++)
 		{
 			threadPool[i] = std::jthread(workerFunction, std::ref(myContainer));
 		}
@@ -362,8 +362,8 @@ TEST(WaitableQueueTests, WaitUntilEmptyOnAlreadyEmpty)
 	siddiqsoft::WaitableQueue<int> queue;
 
 	auto result = queue.waitUntilEmpty(std::chrono::milliseconds(100));
-	ASSERT_TRUE(result.has_value());
-	EXPECT_EQ(0u, result.value());
+	ASSERT_TRUE(result);
+	EXPECT_EQ(true, result);
 }
 
 // --- size on empty queue ---
@@ -488,8 +488,8 @@ TEST(WaitableQueueTests, WaitUntilEmptyWithConsumer)
 	});
 
 	auto result = queue.waitUntilEmpty(std::chrono::milliseconds(3000));
-	ASSERT_TRUE(result.has_value());
-	EXPECT_EQ(0u, result.value());
+	ASSERT_TRUE(result);
+	EXPECT_EQ(true, result);
 
 	consumer.request_stop();
 	consumer.join();
@@ -576,8 +576,8 @@ TEST(WaitableQueueTests, WaitUntilEmptyTimesOut)
 
 	// Very short timeout, no consumer => should return with items still in queue
 	auto result = queue.waitUntilEmpty(std::chrono::milliseconds(100));
-	ASSERT_TRUE(result.has_value());
-	EXPECT_GT(result.value(), 0u);
+	ASSERT_FALSE(result);
+	EXPECT_FALSE(result);
 	EXPECT_EQ(5u, queue.size());
 }
 

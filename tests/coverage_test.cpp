@@ -60,8 +60,8 @@ TEST(RWLContainer_Coverage, StringKeyType)
 {
 	siddiqsoft::RWLContainer<std::string, TestItem> container;
 
-	auto item1 = container.add("key1", TestItem {1, "value1"});
-	auto item2 = container.add("key2", TestItem {2, "value2"});
+	auto item1 = container.add("key1", TestItem {.id = 1, .value = "value1"});
+	auto item2 = container.add("key2", TestItem {.id = 2, .value = "value2"});
 
 	ASSERT_TRUE(item1);
 	ASSERT_TRUE(item2);
@@ -77,8 +77,8 @@ TEST(RWLContainer_Coverage, IntKeyType)
 {
 	siddiqsoft::RWLContainer<int, TestItem> container;
 
-	auto item1 = container.add(100, TestItem {1, "hundred"});
-	auto item2 = container.add(200, TestItem {2, "two-hundred"});
+	auto item1 = container.add(100, TestItem {.id = 1, .value = "hundred"});
+	auto item2 = container.add(200, TestItem {.id = 2, .value = "two-hundred"});
 
 	ASSERT_TRUE(item1);
 	ASSERT_TRUE(item2);
@@ -98,7 +98,7 @@ TEST(RWLContainer_Coverage, ConcurrentReads)
 	// Add some items
 	for (int i = 0; i < 10; ++i)
 	{
-		container.add(std::format("key_{}", i), TestItem {i, std::format("value_{}", i)});
+		container.add(std::format("key_{}", i), TestItem {.id = i, .value = std::format("value_{}", i)});
 	}
 
 	std::atomic_int           readCount {0};
@@ -147,7 +147,7 @@ TEST(RWLContainer_Coverage, ConcurrentWritesAndReads)
 				int counter = 0;
 				while (!st.stop_requested())
 				{
-					container.add(std::format("key_{}", counter), TestItem {counter, "data"});
+					container.add(std::format("key_{}", counter), TestItem {.id = counter, .value = "data"});
 					writeCount++;
 					counter++;
 					if (counter > 100) counter = 0;
@@ -183,7 +183,7 @@ TEST(RWLContainer_Coverage, ScanEarlyTermination)
 
 	for (int i = 0; i < 100; ++i)
 	{
-		container.add(std::format("key_{}", i), TestItem {i, std::format("value_{}", i)});
+		container.add(std::format("key_{}", i), TestItem {.id = i, .value = std::format("value_{}", i)});
 	}
 
 	int  scanCount = 0;
@@ -206,7 +206,7 @@ TEST(RWLContainer_Coverage, ScanNoMatch)
 
 	for (int i = 0; i < 50; ++i)
 	{
-		container.add(std::format("key_{}", i), TestItem {i, "data"});
+		container.add(std::format("key_{}", i), TestItem {.id = i, .value = "data"});
 	}
 
 	int  scanCount = 0;
@@ -229,7 +229,7 @@ TEST(RWLContainer_Coverage, AddCallbackReturnsValidPtr)
 
 	auto item = container.add("key1",
 	                          [](const std::string& key) -> std::shared_ptr<TestItem>
-	                          { return std::make_shared<TestItem>(TestItem {42, key}); });
+	                          { return std::make_shared<TestItem>(TestItem {.id = 42, .value = key}); });
 
 	ASSERT_TRUE(item);
 	EXPECT_EQ(42, item->id);
@@ -242,9 +242,9 @@ TEST(RWLContainer_Coverage, RemoveCounterIncrement)
 {
 	siddiqsoft::RWLContainer<std::string, TestItem> container;
 
-	container.add("a", TestItem {1, "alpha"});
-	container.add("b", TestItem {2, "beta"});
-	container.add("c", TestItem {3, "gamma"});
+	container.add("a", TestItem {.id = 1, .value = "alpha"});
+	container.add("b", TestItem {.id = 2, .value = "beta"});
+	container.add("c", TestItem {.id = 3, .value = "gamma"});
 
 	auto json1 = container.toJson();
 	EXPECT_EQ(3u, json1["adds"].get<uint64_t>());
@@ -291,20 +291,20 @@ TEST(RWLContainer_Coverage, AddSharedPtrMultipleScenarios)
 	siddiqsoft::RWLContainer<std::string, TestItem> container;
 
 	// Scenario 1: Add new item via shared_ptr
-	auto ptr1  = std::make_shared<TestItem>(TestItem {1, "first"});
+	auto ptr1  = std::make_shared<TestItem>(TestItem {.id = 1, .value = "first"});
 	auto item1 = container.add("key1", std::move(ptr1));
 	ASSERT_TRUE(item1);
 	EXPECT_EQ("first", item1->value);
 
 	// Scenario 2: Collision with default behavior (return existing)
-	auto ptr2  = std::make_shared<TestItem>(TestItem {2, "second"});
+	auto ptr2  = std::make_shared<TestItem>(TestItem {.id = 2, .value = "second"});
 	auto item2 = container.add("key1", std::move(ptr2));
 	ASSERT_TRUE(item2);
 	EXPECT_EQ("first", item2->value); // Should be original
 	EXPECT_EQ(item1, item2);
 
 	// Scenario 3: New key
-	auto ptr3  = std::make_shared<TestItem>(TestItem {3, "third"});
+	auto ptr3  = std::make_shared<TestItem>(TestItem {.id = 3, .value = "third"});
 	auto item3 = container.add("key2", std::move(ptr3));
 	ASSERT_TRUE(item3);
 	EXPECT_EQ("third", item3->value);
@@ -318,11 +318,11 @@ TEST(RWLContainer_Coverage, AddCallbackWithReplace)
 	siddiqsoft::RWLContainer<std::string, TestItem> container;
 	container.ReplaceExisting = true;
 
-	auto item1 = container.add("key1", [](const auto& key) { return std::make_shared<TestItem>(TestItem {1, "first"}); });
+	auto item1 = container.add("key1", [](const auto& key) { return std::make_shared<TestItem>(TestItem {.id = 1, .value = "first"}); });
 	ASSERT_TRUE(item1);
 	EXPECT_EQ("first", item1->value);
 
-	auto item2 = container.add("key1", [](const auto& key) { return std::make_shared<TestItem>(TestItem {2, "replaced"}); });
+	auto item2 = container.add("key1", [](const auto& key) { return std::make_shared<TestItem>(TestItem {.id = 2, .value = "replaced"}); });
 	ASSERT_TRUE(item2);
 	EXPECT_EQ("replaced", item2->value);
 	EXPECT_EQ(1u, container.size());
@@ -337,7 +337,7 @@ TEST(RWLContainer_Coverage, FindInLargeContainer)
 	const int ITEM_COUNT = 5000;
 	for (int i = 0; i < ITEM_COUNT; ++i)
 	{
-		container.add(std::format("key_{:05d}", i), TestItem {i, std::format("value_{}", i)});
+		container.add(std::format("key_{:05d}", i), TestItem {.id = i, .value = std::format("value_{}", i)});
 	}
 
 	EXPECT_EQ(static_cast<size_t>(ITEM_COUNT), container.size());
@@ -368,7 +368,7 @@ TEST(RWLContainer_Coverage, RemoveFromLargeContainer)
 	const int ITEM_COUNT = 1000;
 	for (int i = 0; i < ITEM_COUNT; ++i)
 	{
-		container.add(std::format("key_{}", i), TestItem {i, "data"});
+		container.add(std::format("key_{}", i), TestItem {.id = i, .value = "data"});
 	}
 
 	// Remove every 10th item
@@ -455,13 +455,13 @@ TEST(WaitableQueue_Coverage, WaitUntilEmptyVariousTimeouts)
 
 	// Empty queue with short timeout
 	auto result1 = queue.waitUntilEmpty(std::chrono::milliseconds(10));
-	ASSERT_TRUE(result1.has_value());
-	EXPECT_EQ(0u, result1.value());
+	ASSERT_TRUE(result1);
+	EXPECT_EQ(true, result1);
 
 	// Empty queue with long timeout
 	auto result2 = queue.waitUntilEmpty(std::chrono::milliseconds(1000));
-	ASSERT_TRUE(result2.has_value());
-	EXPECT_EQ(0u, result2.value());
+	ASSERT_TRUE(result2);
+	EXPECT_EQ(true, result2);
 
 	// Queue with items but no consumer (should timeout)
 	for (int i = 0; i < 5; ++i)
@@ -471,8 +471,8 @@ TEST(WaitableQueue_Coverage, WaitUntilEmptyVariousTimeouts)
 	}
 
 	auto result3 = queue.waitUntilEmpty(std::chrono::milliseconds(50));
-	ASSERT_TRUE(result3.has_value());
-	EXPECT_GT(result3.value(), 0u);
+	ASSERT_FALSE(result3);
+	EXPECT_FALSE(result3);
 }
 
 // --- Test tryWaitItem with various timeout values ---
@@ -762,8 +762,8 @@ TEST(WaitableQueue_Coverage, WaitUntilEmptyWithActiveDrain)
 
 	// Wait for queue to empty
 	auto result = queue.waitUntilEmpty(std::chrono::milliseconds(3000));
-	ASSERT_TRUE(result.has_value());
-	EXPECT_EQ(0u, result.value());
+	ASSERT_TRUE(result);
+	EXPECT_EQ(true, result);
 
 	consumer.request_stop();
 	consumer.join();

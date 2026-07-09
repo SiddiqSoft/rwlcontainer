@@ -220,7 +220,7 @@ namespace siddiqsoft
 		///     std::cout << "Timeout with " << *finalSize << " items remaining" << std::endl;
 		/// }
 		/// @endcode
-		auto waitUntilEmpty(std::chrono::milliseconds timeoutDuration = std::chrono::milliseconds(1500)) -> std::optional<size_t>
+		auto waitUntilEmpty(std::chrono::milliseconds timeoutDuration = std::chrono::milliseconds(1500)) -> bool
 		{
 			constexpr std::chrono::milliseconds spinInterval {32};
 			std::chrono::milliseconds           spinDuration {32};
@@ -238,7 +238,7 @@ namespace siddiqsoft
 				spinDuration += spinInterval;
 			}
 
-			return size();
+			return isEmpty();
 		}
 
 		/// @brief Waits for an item with timeout and returns it if available
