@@ -234,7 +234,7 @@ nlohmann::json toJson() const
 **JSON Structure:**
 ```json
 {
-  "_typver": "WaitableQueue/1.5.3",
+  "_typver": "WaitableQueue/1.5.5",
   "adds": 100,
   "removes": 95,
   "size": 5
@@ -386,5 +386,5 @@ std::cout << "Pending: " << queue.size() << std::endl;
 
 ---
 
-**Version:** 1.5.3  
+**Version:** 1.5.5  
 **Last Updated:** 2024
