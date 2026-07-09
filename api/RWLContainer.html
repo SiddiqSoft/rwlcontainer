@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RWLContainer API Reference</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.2.0/github-markdown.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/styles/github.min.css">
+    <style>
+        body {
+            background: #f6f8fa;
+            padding: 20px;
+        }
+        .markdown-body {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .back-link:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 15px 0;
+        }
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        table th {
+            background: #f6f8fa;
+            font-weight: 600;
+        }
+        code {
+            background: #f6f8fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        pre {
+            background: #f6f8fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="markdown-body">
+        <a href="../index.html" class="back-link">← Back to Home</a>
+        
+        <h1>RWLContainer API Reference</h1>
+        
+        <p>A thread-safe dictionary container with reader-writer locking for efficient concurrent access.</p>
+        
+        <h2>Overview</h2>
+        
+        <p><code>RWLContainer</code> is a template class that wraps <code>std::unordered_map</code> with <code>std::shared_mutex</code> to provide safe concurrent access. Multiple threads can read simultaneously, while writes are exclusive. All values are stored as <code>shared_ptr</code> for automatic memory management.</p>
+        
+        <pre><code class="language-cpp">template &lt;class KeyType,
+          class StorageType,
+          typename StorageContainer = std::unordered_map&lt;KeyType, std::shared_ptr&lt;StorageType&gt;&gt;&gt;
+class RWLContainer
+</code></pre>
+        
+        <h2>Template Parameters</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Description</th>
+                    <th>Default</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>KeyType</code></td>
+                    <td>The key type (e.g., <code>std::string</code>, <code>int</code>)</td>
+                    <td>Required</td>
+                </tr>
+                <tr>
+                    <td><code>StorageType</code></td>
+                    <td>The value type to store (use value types, not pointers)</td>
+                    <td>Required</td>
+                </tr>
+                <tr>
+                    <td><code>StorageContainer</code></td>
+                    <td>The underlying container type</td>
+                    <td><code>std::unordered_map&lt;KeyType, std::shared_ptr&lt;StorageType&gt;&gt;</code></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h2>Configuration Properties</h2>
+        
+        <h3>ReplaceExisting</h3>
+        
+        <pre><code class="language-cpp">bool ReplaceExisting {false};
+</code></pre>
+        
+        <p>Controls behavior when adding a key that already exists:</p>
+        <ul>
+            <li><code>true</code> - Replaces the existing value</li>
+            <li><code>false</code> - Returns the existing value without modification</li>
+        </ul>
+        
+        <h3>FailOnCollission</h3>
+        
+        <pre><code class="language-cpp">bool FailOnCollission {false};
+</code></pre>
+        
+        <p>Controls behavior when adding a key that already exists:</p>
+        <ul>
+            <li><code>true</code> - Returns empty <code>shared_ptr</code> on collision</li>
+            <li><code>false</code> - Returns existing value on collision</li>
+        </ul>
+        
+        <p><strong>Note:</strong> <code>FailOnCollission</code> takes precedence over <code>ReplaceExisting</code>.</p>
+        
+        <h2>Methods</h2>
+        
+        <h3>add(key, value)</h3>
+        
+        <p>Adds or updates an element by moving a value into a <code>shared_ptr</code>.</p>
+        
+        <pre><code class="language-cpp">StorageTypePtr add(const KeyType&amp; key, StorageType&amp;&amp; value)
+</code></pre>
+        
+        <p><strong>Parameters:</strong></p>
+        <ul>
+            <li><code>key</code> - The key to associate with the value</li>
+            <li><code>value</code> - The value to store (moved into shared_ptr)</li>
+        </ul>
+        
+        <p><strong>Returns:</strong> <code>shared_ptr&lt;StorageType&gt;</code> to the newly inserted or existing item, or empty <code>shared_ptr</code> on collision with <code>FailOnCollission=true</code></p>
+        
+        <p><strong>Thread Safety:</strong> Exclusive write lock</p>
+        
+        <p><strong>Collision Behavior:</strong></p>
+        <ul>
+            <li><code>FailOnCollission=true</code> → Returns empty <code>shared_ptr</code></li>
+            <li><code>ReplaceExisting=true</code> → Replaces existing value</li>
+            <li>Otherwise → Returns existing value</li>
+        </ul>
+        
+        <p><strong>Example:</strong></p>
+        <pre><code class="language-cpp">siddiqsoft::RWLContainer&lt;std::string, int&gt; cache;
+auto item = cache.add("key1", 42);
+if (item) {
+    std::cout &lt;&lt; "Added: " &lt;&lt; *item &lt;&lt; std::endl;
+}
+</code></pre>
+        
+        <p><strong>Throws:</strong> <code>std::runtime_error</code> if insertion fails</p>
+        
+        <hr>
+        
+        <h3>add(key, shared_ptr)</h3>
+        
+        <p>Adds or updates an element using an existing <code>shared_ptr</code>.</p>
+        
+        <pre><code class="language-cpp">StorageTypePtr add(const KeyType&amp; key, StorageTypePtr&amp;&amp; value)
+</code></pre>
+        
+        <p><strong>Parameters:</strong></p>
+        <ul>
+            <li><code>key</code> - The key to associate with the value</li>
+            <li><code>value</code> - The <code>shared_ptr</code> to store (moved into container)</li>
+        </ul>
+        
+        <p><strong>Returns:</strong> <code>shared_ptr&lt;StorageType&gt;</code> to the newly inserted or existing item</p>
+        
+        <p><strong>Thread Safety:</strong> Exclusive write lock</p>
+        
+        <p><strong>Note:</strong> The input <code>shared_ptr</code> is moved; the original reference becomes invalid.</p>
+        
+        <p><strong>Example:</strong></p>
+        <pre><code class="language-cpp">auto ptr = std::make_shared&lt;int&gt;(42);
+auto item = cache.add("key1", std::move(ptr));
+</code></pre>
+        
+        <hr>
+        
+        <h3>add(key, callback)</h3>
+        
+        <p>Adds an element by invoking a callback function for lazy initialization.</p>
+        
+        <pre><code class="language-cpp">StorageTypePtr add(const KeyType&amp; key, 
+                   std::function&lt;StorageTypePtr(const KeyType&amp;)&gt;&amp;&amp; newObjectCallback)
+</code></pre>
+        
+        <p><strong>Parameters:</strong></p>
+        <ul>
+            <li><code>key</code> - The key to add</li>
+            <li><code>newObjectCallback</code> - Callback that accepts the key and returns <code>shared_ptr&lt;StorageType&gt;</code></li>
+        </ul>
+        
+        <p><strong>Returns:</strong> <code>shared_ptr&lt;StorageType&gt;</code> to the newly created or existing item</p>
+        
+        <p><strong>Thread Safety:</strong> Exclusive write lock</p>
+        
+        <p><strong>Note:</strong> The callback executes within the write lock, so keep it brief.</p>
+        
+        <p><strong>Example:</strong></p>
+        <pre><code class="language-cpp">auto item = cache.add("key1", [](const auto&amp; key) {
+    return std::make_shared&lt;int&gt;(42);
+});
+</code></pre>
+        
+        <hr>
+        
+        <h3>remove(key)</h3>
+        
+        <p>Removes and returns an element by key.</p>
+        
+        <pre><code class="language-cpp">[[nodiscard]] StorageTypePtr remove(const KeyType&amp; key)
+</code></pre>
+        
+        <p><strong>Parameters:</strong></p>
+        <ul>
+            <li><code>key</code> - The key to remove</li>
+        </ul>
+        
+        <p><strong>Returns:</strong> <code>shared_ptr&lt;StorageType&gt;</code> to the removed item, or empty <code>shared_ptr</code> if key not found</p>
+        
+        <p><strong>Thread Safety:</strong> Exclusive write lock</p>
+        
+        <p><strong>Note:</strong> The returned <code>shared_ptr</code> keeps the item alive even after removal from container.</p>
+        
+        <p><strong>Example:</strong></p>
+        <pre><code class="language-cpp">auto removed = cache.remove("key1");
+if (removed) {
+    std::cout &lt;&lt; "Removed: " &lt;&lt; *removed &lt;&lt; std::endl;
+}
+</code></pre>
+        
+        <hr>
+        
+        <h3>find(key)</h3>
+        
+        <p>Finds and returns an element by key without removing it.</p>
+        
+        <pre><code class="language-cpp">StorageTypePtr find(const KeyType&amp; key)
+</code></pre>
+        
+        <p><strong>Parameters:</strong></p>
+        <ul>
+            <li><code>key</code> - The key to find</li>
+        </ul>
+        
+        <p><strong>Returns:</strong> <code>shared_ptr&lt;StorageType&gt;</code> to the found item, or empty <code>shared_ptr</code> if key not found</p>
+        
+        <p><strong>Thread Safety:</strong> Shared read lock (allows concurrent reads)</p>
+        
+        <p><strong>Note:</strong> Multiple threads can call <code>find()</code> simultaneously.</p>
+        
+        <p><strong>Example:</strong></p>
+        <pre><code class="language-cpp">auto item = cache.find("key1");
+if (item) {
+    std::cout &lt;&lt; "Found: " &lt;&lt; *item &lt;&lt; std::endl;
+}
+</code></pre>
+        
+        <hr>
+        
+        <h3>size()</h3>
+        
+        <p>Returns the number of elements in the container.</p>
+        
+        <pre><code class="language-cpp">size_t size() const
+</code></pre>
+        
+        <p><strong>Returns:</strong> The number of elements currently in the container</p>
+        
+        <p><strong>Thread Safety:</strong> Shared read lock</p>
+        
+        <p><strong>Complexity:</strong> O(1)</p>
+        
+        <p><strong>Example:</strong></p>
+        <pre><code class="language-cpp">std::cout &lt;&lt; "Container has " &lt;&lt; cache.size() &lt;&lt; " items" &lt;&lt; std::endl;
+</code></pre>
+        
+        <hr>
+        
+        <h3>scan(callback)</h3>
+        
+        <p>Iterates through all elements and returns the first match.</p>
+        
+        <pre><code class="language-cpp">StorageTypePtr scan(std::function&lt;bool(const KeyType&amp;, StorageTypePtr&amp;)&gt; scanCallback)
+</code></pre>
+        
+        <p><strong>Parameters:</strong></p>
+        <ul>
+            <li><code>scanCallback</code> - Callback function that receives <code>(key, value)</code> and returns <code>true</code> to stop iteration</li>
+        </ul>
+        
+        <p><strong>Returns:</strong> <code>shared_ptr&lt;StorageType&gt;</code> to the first matching item, or empty <code>shared_ptr</code> if no match found</p>
+        
+        <p><strong>Thread Safety:</strong> Shared read lock (entire scan is atomic)</p>
+        
+        <p><strong>Note:</strong> The callback is invoked for each element until it returns <code>true</code>.</p>
+        
+        <p><strong>Example:</strong></p>
+        <pre><code class="language-cpp">auto item = cache.scan([](const auto&amp; key, auto&amp; value) {
+    return key.find("target") != std::string::npos;
+});
+</code></pre>
+        
+        <hr>
+        
+        <h3>toJson()</h3>
+        
+        <p>Serializes container metadata to JSON.</p>
+        
+        <pre><code class="language-cpp">nlohmann::json toJson()
+</code></pre>
+        
+        <p><strong>Returns:</strong> JSON object with container statistics</p>
+        
+        <p><strong>Thread Safety:</strong> Shared read lock</p>
+        
+        <p><strong>Requirements:</strong> <code>nlohmann/json.hpp</code> must be included before this header</p>
+        
+        <p><strong>JSON Structure:</strong></p>
+        <pre><code class="language-json">{
+  "_typver": "RWLContainer/1.5.3",
+  "adds": 42,
+  "removes": 10,
+  "ReplaceExisting": false,
+  "FailOnCollission": false,
+  "size": 32
+}
+</code></pre>
+        
+        <p><strong>Example:</strong></p>
+        <pre><code class="language-cpp">#include "nlohmann/json.hpp"
+auto json = cache.toJson();
+std::cout &lt;&lt; json.dump(2) &lt;&lt; std::endl;
+</code></pre>
+        
+        <hr>
+        
+        <h2>Thread Safety</h2>
+        
+        <p>All operations in <code>RWLContainer</code> are thread-safe:</p>
+        
+        <ul>
+            <li><strong>Read operations</strong> (<code>find</code>, <code>size</code>, <code>scan</code>) use shared locks - multiple threads can execute concurrently</li>
+            <li><strong>Write operations</strong> (<code>add</code>, <code>remove</code>) use exclusive locks - only one thread can execute at a time</li>
+            <li><strong>Atomic counters</strong> (<code>_counterAdds</code>, <code>_counterRemoves</code>) are thread-safe</li>
+        </ul>
+        
+        <h2>Performance Characteristics</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Operation</th>
+                    <th>Complexity</th>
+                    <th>Lock Type</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>add()</code></td>
+                    <td>O(1) average</td>
+                    <td>Exclusive</td>
+                </tr>
+                <tr>
+                    <td><code>remove()</code></td>
+                    <td>O(1) average</td>
+                    <td>Exclusive</td>
+                </tr>
+                <tr>
+                    <td><code>find()</code></td>
+                    <td>O(1) average</td>
+                    <td>Shared</td>
+                </tr>
+                <tr>
+                    <td><code>size()</code></td>
+                    <td>O(1)</td>
+                    <td>Shared</td>
+                </tr>
+                <tr>
+                    <td><code>scan()</code></td>
+                    <td>O(n)</td>
+                    <td>Shared</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h2>Best Practices</h2>
+        
+        <ol>
+            <li><strong>Use appropriate key types</strong> - Prefer <code>std::string</code> or numeric types with good hash functions</li>
+            <li><strong>Keep values small</strong> - Store large objects by reference using <code>shared_ptr</code></li>
+            <li><strong>Minimize callback duration</strong> - Callbacks in <code>add()</code> execute within the write lock</li>
+            <li><strong>Check return values</strong> - Always check if <code>find()</code> or <code>remove()</code> returned a valid <code>shared_ptr</code></li>
+            <li><strong>Configure collision behavior</strong> - Set <code>ReplaceExisting</code> and <code>FailOnCollission</code> based on your use case</li>
+        </ol>
+        
+        <h2>Common Patterns</h2>
+        
+        <h3>Cache Pattern</h3>
+        
+        <pre><code class="language-cpp">siddiqsoft::RWLContainer&lt;std::string, std::string&gt; cache;
+
+// Try to find, if not found, add
+auto item = cache.find("key");
+if (!item) {
+    item = cache.add("key", "value");
+}
+</code></pre>
+        
+        <h3>Lazy Initialization</h3>
+        
+        <pre><code class="language-cpp">auto item = cache.add("key", [](const auto&amp; key) {
+    return std::make_shared&lt;ExpensiveObject&gt;(key);
+});
+</code></pre>
+        
+        <h3>Atomic Replace</h3>
+        
+        <pre><code class="language-cpp">cache.ReplaceExisting = true;
+auto newItem = cache.add("key", "new_value");
+</code></pre>
+        
+        <hr>
+        
+        <p><strong>Version:</strong> 1.5.3<br>
+        <strong>Last Updated:</strong> 2024</p>
+        
+        <a href="../index.html" class="back-link">← Back to Home</a>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/highlight.min.js"></script>
+    <script>
+        hljs.highlightAll();
+    </script>
+</body>
+</html>

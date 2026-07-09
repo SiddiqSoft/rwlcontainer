@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RWLContainer - Thread-Safe C++20 Containers</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.2.0/github-markdown.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/styles/github.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            border-radius: 8px;
+            padding: 15px 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-top {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 12px;
+        }
+        
+        .logo {
+            max-width: 60px;
+            height: auto;
+            flex-shrink: 0;
+        }
+        
+        .header-title {
+            flex: 1;
+            text-align: left;
+        }
+        
+        header h1 {
+            color: #667eea;
+            font-size: 1.8em;
+            margin-bottom: 2px;
+        }
+        
+        header p {
+            color: #666;
+            font-size: 0.9em;
+            margin: 0;
+        }
+        
+        .badges {
+            display: flex;
+            justify-content: flex-start;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            background: #f0f0f0;
+            border-radius: 20px;
+            font-size: 0.75em;
+            color: #333;
+        }
+        
+        .badge.cpp {
+            background: #00599c;
+            color: white;
+        }
+        
+        .badge.license {
+            background: #28a745;
+            color: white;
+        }
+        
+        .badge.status {
+            background: #667eea;
+            color: white;
+        }
+        
+        .header-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+        
+        .header-feature {
+            background: #f0f0f0;
+            padding: 6px 8px;
+            border-radius: 5px;
+            text-align: center;
+            color: #333;
+            font-size: 0.7em;
+        }
+        
+        .header-feature strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 1px;
+            font-size: 0.85em;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .btn-secondary:hover {
+            background: #f8f9ff;
+            transform: translateY(-2px);
+        }
+        
+        .api-section {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        .api-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.8em;
+        }
+        
+        .api-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        .api-class {
+            border-left: 4px solid #667eea;
+            padding-left: 20px;
+        }
+        
+        .api-class h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .api-class h3 a {
+            color: #333;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .api-class h3 a:hover {
+            color: #667eea;
+        }
+        
+        .api-class p {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .api-class ul {
+            list-style: none;
+            padding-left: 0;
+            margin-bottom: 15px;
+        }
+        
+        .api-class ul li {
+            color: #666;
+            padding: 5px 0;
+            padding-left: 20px;
+            position: relative;
+            font-size: 0.9em;
+        }
+        
+        .api-class ul li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .method-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .method-list li {
+            color: #666;
+            padding: 8px 0;
+            padding-left: 20px;
+            position: relative;
+            font-size: 0.95em;
+        }
+        
+        .method-list li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .method-list li code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        
+        .method-list li a {
+            color: #666;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .method-list li a:hover {
+            color: #667eea;
+        }
+        
+        .method-list li a code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        
+        .doc-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+        
+        .doc-link:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+        
+        .quick-start {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        .quick-start h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        
+        .quick-start pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin-bottom: 15px;
+        }
+        
+        .quick-start code {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #333;
+        }
+        
+        footer {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        footer a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .api-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-top {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .header-title {
+                text-align: left;
+            }
+            
+            header h1 {
+                font-size: 1.5em;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                text-align: center;
+            }
+            
+            .header-features {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-top">
+                <img src="logo.png" alt="Siddiq Software Logo" class="logo">
+                <div class="header-title">
+                    <h1>🔒 RWLContainer</h1>
+                    <p>Thread-Safe C++20 Containers</p>
+                </div>
+            </div>
+            
+            <div class="badges">
+                <span class="badge cpp">C++20</span>
+                <span class="badge license">BSD 3-Clause</span>
+                <span class="badge status">Production Ready</span>
+            </div>
+            
+            <div class="header-features">
+                <div class="header-feature">
+                    <strong>🔐 Thread-Safe</strong>
+                    Synchronization
+                </div>
+                <div class="header-feature">
+                    <strong>⚡ High Performance</strong>
+                    Reader-writer locking
+                </div>
+                <div class="header-feature">
+                    <strong>🎯 Type-Safe</strong>
+                    C++20 templates
+                </div>
+                <div class="header-feature">
+                    <strong>✅ Production-Ready</strong>
+                    Full test coverage
+                </div>
+                <div class="header-feature">
+                    <strong>📦 Zero-Copy</strong>
+                    Move semantics
+                </div>
+                <div class="header-feature">
+                    <strong>📄 JSON Support</strong>
+                    Serialization
+                </div>
+            </div>
+            
+            <div class="cta-buttons">
+                <a href="#api" class="btn btn-primary">📚 API Documentation</a>
+                <a href="https://github.com/SiddiqSoft/RWLContainer" class="btn btn-secondary">🔗 GitHub</a>
+                <a href="https://www.nuget.org/packages/SiddiqSoft.RWLContainer/" class="btn btn-secondary">📦 NuGet</a>
+            </div>
+        </header>
+        
+        <div id="api" class="api-section">
+            <h2>Class API & Structure</h2>
+            
+            <div class="api-grid">
+                <div class="api-class">
+                    <a href="api/RWLContainer.html"><h3>RWLContainer</h3></a>
+                    
+                    <p>A thread-safe dictionary with reader-writer locking for efficient concurrent access.</p>
+                    <ul>
+                        <li>Multiple concurrent readers</li>
+                        <li>Exclusive writer access</li>
+                        <li>Automatic memory management</li>
+                        <li>JSON serialization support</li>
+                    </ul>
+                    
+                    <strong>Configuration:</strong>
+                    <ul class="method-list">
+                        <li><code>ReplaceExisting</code> - Replace on collision</li>
+                        <li><code>FailOnCollission</code> - Fail on collision</li>
+                    </ul>
+                    
+                    <strong>Methods:</strong>
+                    <ul class="method-list">
+                        <li><a href="api/RWLContainer.html#addkey-value"><code>add(key, value)</code></a> - Add by value</li>
+                        <li><a href="api/RWLContainer.html#addkey-shared_ptr"><code>add(key, shared_ptr)</code></a> - Add by pointer</li>
+                        <li><a href="api/RWLContainer.html#addkey-callback"><code>add(key, callback)</code></a> - Add via callback</li>
+                        <li><a href="api/RWLContainer.html#removekey"><code>remove(key)</code></a> - Remove and return</li>
+                        <li><a href="api/RWLContainer.html#findkey"><code>find(key)</code></a> - Find without removing</li>
+                        <li><a href="api/RWLContainer.html#size"><code>size()</code></a> - Get element count</li>
+                        <li><a href="api/RWLContainer.html#scancallback"><code>scan(callback)</code></a> - Iterate and find</li>
+                        <li><a href="api/RWLContainer.html#tojson"><code>toJson()</code></a> - Serialize metadata</li>
+                    </ul>
+                    
+                    <a href="api/RWLContainer.html" class="doc-link">📖 Full API Reference</a>
+                </div>
+                
+                <div class="api-class">
+                    <a href="api/WaitableQueue.html"><h3>WaitableQueue</h3></a>
+
+                    <p>A thread-safe queue for producer-consumer patterns with timeout support.</p>
+                    <ul>
+                        <li>Efficient producer-consumer</li>
+                        <li>Timeout-based waiting</li>
+                        <li>Atomic counters</li>
+                        <li>JSON serialization support</li>
+                    </ul>
+                    
+                    <strong>Characteristics:</strong>
+                    <ul class="method-list">
+                        <li>FIFO ordering</li>
+                        <li>Non-copyable, non-movable</li>
+                        <li>Efficient waiting with semaphore</li>
+                        <li>Timeout support</li>
+                    </ul>
+                    
+                    <strong>Methods:</strong>
+                    <ul class="method-list">
+                        <li><a href="api/WaitableQueue.html#pushvalue"><code>push(value)</code></a> - Add to queue</li>
+                        <li><a href="api/WaitableQueue.html#emplacevalue"><code>emplace(value)</code></a> - Construct in-place</li>
+                        <li><a href="api/WaitableQueue.html#trywaititemtimeout"><code>tryWaitItem(timeout)</code></a> - Wait for item</li>
+                        <li><a href="api/WaitableQueue.html#waituntilemptytimeout"><code>waitUntilEmpty(timeout)</code></a> - Wait until empty</li>
+                        <li><a href="api/WaitableQueue.html#size"><code>size()</code></a> - Get queue size</li>
+                        <li><a href="api/WaitableQueue.html#addcounter"><code>addCounter()</code></a> - Total adds</li>
+                        <li><a href="api/WaitableQueue.html#removecounter"><code>removeCounter()</code></a> - Total removes</li>
+                        <li><a href="api/WaitableQueue.html#tojson"><code>toJson()</code></a> - Serialize metadata</li>
+                    </ul>
+                    
+                    <a href="api/WaitableQueue.html" class="doc-link">📖 Full API Reference</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="quick-start">
+            <h2>Quick Start</h2>
+            <p><strong>Installation:</strong></p>
+            <pre><code># Using NuGet (Windows)
+nuget install SiddiqSoft.RWLContainer
+
+# Using CPM (CMake)
+CPMAddPackage("gh:SiddiqSoft/RWLContainer@1.5.3")</code></pre>
+            
+            <p><strong>RWLContainer Example:</strong></p>
+            <pre><code>#include "siddiqsoft/RWLContainer.hpp"
+
+int main() {
+    siddiqsoft::RWLContainer&lt;std::string, int&gt; cache;
+    
+    cache.add("key1", 42);
+    if (auto value = cache.find("key1")) {
+        std::cout &lt;&lt; "Value: " &lt;&lt; *value &lt;&lt; std::endl;
+    }
+    cache.remove("key1");
+    
+    return 0;
+}</code></pre>
+            
+            <p><strong>WaitableQueue Example:</strong></p>
+            <pre><code>#include "siddiqsoft/WaitableQueue.hpp"
+
+int main() {
+    siddiqsoft::WaitableQueue&lt;std::string&gt; queue;
+    
+    std::thread producer([&]() {
+        queue.push("item1");
+        queue.push("item2");
+    });
+    
+    std::thread consumer([&]() {
+        while (auto item = queue.tryWaitItem(std::chrono::milliseconds(500))) {
+            std::cout &lt;&lt; "Got: " &lt;&lt; *item &lt;&lt; std::endl;
+        }
+    });
+    
+    producer.join();
+    consumer.join();
+    
+    return 0;
+}</code></pre>
+            
+            <p style="margin-top: 20px;">
+                <strong>📖 More Examples:</strong> See <a href="wiki/Examples.md">Examples.md</a> and <a href="wiki/Getting-Started.md">Getting-Started.md</a> for detailed usage patterns.
+            </p>
+        </div>
+        
+        <footer>
+            <p>
+                © 2024 Siddiq Software LLC. All rights reserved. | 
+                <a href="https://github.com/SiddiqSoft/RWLContainer">GitHub</a> | 
+                <a href="https://github.com/SiddiqSoft/RWLContainer/blob/main/LICENSE">License</a> |
+                <a href="wiki/Home.md">Documentation</a>
+            </p>
+        </footer>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.8.0/highlight.min.js"></script>
+    <script>
+        hljs.highlightAll();
+    </script>
+</body>
+</html>
