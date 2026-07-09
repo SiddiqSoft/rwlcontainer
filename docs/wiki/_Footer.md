@@ -32,7 +32,7 @@
 
 ---
 
-**Version:** 1.5.3  
+**Version:** 1.5.5  
 **Last Updated:** 2024  
 **Maintainer:** Siddiq Software LLC
 
