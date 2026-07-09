@@ -21,10 +21,6 @@ All platforms are tested in the CI/CD pipeline.
 
 **A:** Yes, all operations are thread-safe. RWLContainer uses `std::shared_mutex` for reader-writer locking, and WaitableQueue uses `std::shared_mutex` with `std::counting_semaphore`.
 
-### Q: Can I use these classes in production?
-
-**A:** Yes, the library is production-ready with comprehensive test coverage and CI/CD validation.
-
 ### Q: How do I install the library?
 
 **A:** 

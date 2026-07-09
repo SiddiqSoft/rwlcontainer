@@ -9,7 +9,7 @@ RWLContainer : Reader-writer protected containers
 
 # Overview
 
-This library provides convenient, production-ready wrappers around C++20 standard library synchronization primitives:
+This library provides convenient wrappers around C++20 standard library synchronization primitives:
 
 - **RWLContainer**: A reader-writer lock protected dictionary that wraps `std::unordered_map` with `std::shared_mutex` for safe concurrent access
 - **WaitableQueue**: A thread-safe queue that augments `std::queue` with `std::shared_mutex` and `std::counting_semaphore` for efficient producer-consumer patterns
