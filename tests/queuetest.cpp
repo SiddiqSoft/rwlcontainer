@@ -78,7 +78,7 @@ TEST(WaitableQueueTests, LoadTest_1)
 
 		// Create the workers..
 		std::array<std::jthread, THREAD_COUNT> threadPool {};
-		for (uint i = 0; i < THREAD_COUNT; i++)
+		for (uint8_t i = 0; i < THREAD_COUNT; i++)
 		{
 			threadPool[i] = std::jthread(workerFunction, std::ref(myContainer));
 		}

@@ -278,14 +278,14 @@ while (true) {
 
 ---
 
-#### `waitUntilEmpty(std::chrono::milliseconds timeout = 1500ms) -> std::optional<size_t>`
+#### `waitUntilEmpty(std::chrono::milliseconds timeout = 1500ms) -> bool`
 
 Spins until the queue is empty or timeout occurs. Useful for graceful shutdown.
 
 **Parameters:**
 - `timeout`: Maximum time to wait (defaults to 1500ms)
 
-**Returns:** `std::optional<size_t>` - The final queue size
+**Returns:** `bool` - `true` if queue became empty, `false` if timeout occurred
 
 **Note:** Use this before destroying the queue to ensure all items are processed.
 
@@ -293,8 +293,8 @@ Spins until the queue is empty or timeout occurs. Useful for graceful shutdown.
 ```cpp
 // Signal producers to stop
 // Wait for queue to drain
-auto finalSize = queue.waitUntilEmpty(std::chrono::milliseconds(2000));
-if (finalSize && *finalSize == 0) {
+auto result = queue.waitUntilEmpty(std::chrono::milliseconds(2000));
+if (result) {
     // Queue is empty
 }
 ```

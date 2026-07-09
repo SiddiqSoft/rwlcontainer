@@ -20,7 +20,7 @@ project(RWLContainer
         VERSION         "${CURRENT_PROJECT_VERSION}"
         LANGUAGES       CXX
         HOMEPAGE_URL    "%%myurl%%"
-        DESCRIPTION     "Classes to allow you to build asynchrony in your applications using standard C++ jthread, semaphore, deque")
+        DESCRIPTION     "Provides a read-write waitable queue and a read-write mult-thread safe container")
 
 
 # ____________________________________

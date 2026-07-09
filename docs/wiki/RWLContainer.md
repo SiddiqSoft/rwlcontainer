@@ -253,7 +253,7 @@ auto toJson() const -> nlohmann::json const
 **JSON Structure:**
 ```json
 {
-  "_typver": "RWLContainer/1.5.3",
+  "_typver": "RWLContainer/1.5.5",
   "adds": 42,
   "removes": 10,
   "ReplaceExisting": false,
@@ -328,5 +328,5 @@ auto newItem = cache.add("key", "new_value");
 
 ---
 
-**Version:** 1.5.3  
+**Version:** 1.5.5  
 **Last Updated:** 2024

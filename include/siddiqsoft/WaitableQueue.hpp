@@ -379,7 +379,7 @@ namespace siddiqsoft
 		nlohmann::json toJson() const
 		{
 			return nlohmann::json {
-					{"_typver", "WaitableQueue/1.5.3"}, {"adds", addCounter()}, {"removes", removeCounter()}, {"size", size()}};
+					{"_typver", "WaitableQueue/1.5.5"}, {"adds", addCounter()}, {"removes", removeCounter()}, {"size", size()}};
 		}
 #endif
 

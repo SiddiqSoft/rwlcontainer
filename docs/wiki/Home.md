@@ -1,6 +1,6 @@
 # RWLContainer Wiki
 
-Welcome to the RWLContainer documentation. This library provides production-ready, thread-safe container classes for C++20 applications.
+Welcome to the RWLContainer documentation. This library provides thread-safe container classes for C++20 applications.
 
 ## Overview
 
@@ -18,7 +18,7 @@ RWLContainer offers two main classes for concurrent programming:
 nuget install SiddiqSoft.RWLContainer
 
 # Using CPM (CMake)
-CPMAddPackage("gh:SiddiqSoft/RWLContainer@1.5.3")
+CPMAddPackage("gh:SiddiqSoft/RWLContainer@1.5.5")
 ```
 
 ### Basic Usage
@@ -87,7 +87,6 @@ int main() {
 ✅ **Thread-Safe** - All operations protected by synchronization primitives  
 ✅ **High Performance** - Reader-writer locking allows concurrent reads  
 ✅ **Type-Safe** - Full C++20 template support  
-✅ **Production-Ready** - Comprehensive test coverage and CI/CD  
 ✅ **Zero-Copy** - Move semantics and shared_ptr for efficient memory management  
 ✅ **JSON Support** - Optional JSON serialization with nlohmann/json  
 
@@ -103,6 +102,6 @@ BSD 3-Clause License - See LICENSE file for details
 
 ---
 
-**Version:** 1.5.3  
+**Version:** 1.5.5  
 **Last Updated:** 2024  
 **Maintainer:** Siddiq Software LLC

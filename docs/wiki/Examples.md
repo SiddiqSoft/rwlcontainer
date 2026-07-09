@@ -183,7 +183,7 @@ int main() {
     
     // Output:
     // {
-    //   "_typver": "RWLContainer/1.5.3",
+    //   "_typver": "RWLContainer/1.5.5",
     //   "adds": 3,
     //   "removes": 1,
     //   "ReplaceExisting": false,
@@ -480,7 +480,7 @@ int main() {
     
     // Output:
     // {
-    //   "_typver": "WaitableQueue/1.5.3",
+    //   "_typver": "WaitableQueue/1.5.5",
     //   "adds": 10,
     //   "removes": 7,
     //   "size": 3
@@ -555,5 +555,5 @@ int main() {
 
 ---
 
-**Version:** 1.5.3  
+**Version:** 1.5.5  
 **Last Updated:** 2024

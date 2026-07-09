@@ -361,7 +361,7 @@ namespace siddiqsoft
 		/// @endcode
 		auto toJson() const -> nlohmann::json const
 		{
-			return nlohmann::json {{"_typver", "RWLContainer/1.5.3"},
+			return nlohmann::json {{"_typver", "RWLContainer/1.5.5"},
 			                       {"adds", _counterAdds.load()},
 			                       {"removes", _counterRemoves.load()},
 			                       {"ReplaceExisting", ReplaceExisting},

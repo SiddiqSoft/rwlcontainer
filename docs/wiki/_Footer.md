@@ -4,7 +4,7 @@
 
 ## About RWLContainer
 
-**RWLContainer** is a production-ready C++20 library providing thread-safe container classes for concurrent programming.
+**RWLContainer** is a C++20 library providing thread-safe container classes for concurrent programming.
 
 ### Key Features
 - ✅ Thread-safe dictionary with reader-writer locking
@@ -32,7 +32,7 @@
 
 ---
 
-**Version:** 1.5.3  
+**Version:** 1.5.5  
 **Last Updated:** 2024  
 **Maintainer:** Siddiq Software LLC
 
